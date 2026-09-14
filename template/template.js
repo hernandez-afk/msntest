@@ -64,12 +64,17 @@
   };
 
   function buildButtons() {
+    // accessory: true keeps these on the shell's plain --accent styling
+    // (border/color at rest, filled on press) instead of the accent-2
+    // class real games use for a secondary sprite color — accent-2 is a
+    // fixed per-game color the picker below never touches, so without
+    // this every button would sit at that default (blue) until pressed.
     const buttons = [];
     if (sideState.left.mode === 'buttons') {
-      for (let i = 0; i < sideState.left.count; i++) buttons.push({ id: `l${i}`, label: '', side: 'left' });
+      for (let i = 0; i < sideState.left.count; i++) buttons.push({ id: `l${i}`, label: '', side: 'left', accessory: true });
     }
     if (sideState.right.mode === 'buttons') {
-      for (let i = 0; i < sideState.right.count; i++) buttons.push({ id: `r${i}`, label: '', side: 'right' });
+      for (let i = 0; i < sideState.right.count; i++) buttons.push({ id: `r${i}`, label: '', side: 'right', accessory: true });
     }
     return buttons;
   }
