@@ -407,18 +407,11 @@
 }
 
 /* Boot logo */
-.boot-logo {
-  font-family: var(--font-vector);
-  font-size: clamp(28px, 8vw, 64px);
-  color: var(--atari-red);
-  letter-spacing: .12em;
-  text-shadow: 0 0 12px var(--atari-red), 0 0 30px rgba(224,30,43,.6);
-}
-.boot-fuji {
-  width: clamp(60px, 14vw, 110px);
+.boot-logo-mark {
+  width: clamp(120px, 26vw, 220px);
   height: auto;
   display: block;
-  margin: 0 auto 6px;
+  filter: drop-shadow(0 0 10px var(--atari-red)) drop-shadow(0 0 28px rgba(224,30,43,.55));
 }
 
 /* Leaderboard */
