@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Screen Template — Atari</title>
+  <link rel="stylesheet" href="../shared/theme.css">
+  <link rel="stylesheet" href="../shared/shell.css">
+  <link rel="stylesheet" href="template.css">
+</head>
+<body>
+  <div class="template-layout">
+    <aside class="control-panel">
+      <div class="panel-heading">
+        <span class="panel-eyebrow">ATARI SHELL</span>
+        <h1 class="panel-title">SCREEN TEMPLATE</h1>
+      </div>
+
+      <section class="panel-group">
+        <h2 class="panel-label">Screen</h2>
+        <div class="tab-grid" id="screen-tabs">
+          <button class="tab-btn" data-screen="home">HOME</button>
+          <button class="tab-btn" data-screen="playing">IN-GAME</button>
+          <button class="tab-btn" data-screen="gameover">GAME OVER</button>
+          <button class="tab-btn" data-screen="leaderboard">HIGH SCORE</button>
+        </div>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-label">Header title</h2>
+        <input type="text" id="title-input" class="panel-input" placeholder="GAME NAME" maxlength="18">
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-label">Color scheme</h2>
+        <div class="swatch-row" id="color-swatches"></div>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-label">Buttons — left side <span class="panel-count" id="left-count">0</span></h2>
+        <div class="stepper" data-side="left">
+          <button class="stepper-btn" data-dir="down" aria-label="Fewer left buttons">–</button>
+          <div class="stepper-dots" id="left-dots"></div>
+          <button class="stepper-btn" data-dir="up" aria-label="More left buttons">+</button>
+        </div>
+      </section>
+
+      <section class="panel-group">
+        <h2 class="panel-label">Buttons — right side <span class="panel-count" id="right-count">0</span></h2>
+        <div class="stepper" data-side="right">
+          <button class="stepper-btn" data-dir="down" aria-label="Fewer right buttons">–</button>
+          <div class="stepper-dots" id="right-dots"></div>
+          <button class="stepper-btn" data-dir="up" aria-label="More right buttons">+</button>
+        </div>
+      </section>
+
+      <p class="panel-note">The home screen's own LEFT/RIGHT toggle (part of the outline below) decides which physical side is "primary" — try it, then compare against these counts.</p>
+    </aside>
+
+    <div class="preview-stage">
+      <div id="app"></div>
+    </div>
+  </div>
+
+  <script src="../shared/game-shell.js"></script>
+  <script src="template.js"></script>
+</body>
+</html>

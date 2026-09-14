@@ -293,6 +293,7 @@
       this._lastT = 0;
       this._gridPhase = 0;
       this._lastAccentKey = '';
+      this._accentOverride = null;
 
       // --accent itself is progressive (see _updateAccentColor) — every
       // cabinet starts white and grows color as score/level climb.
@@ -315,6 +316,32 @@
     }
 
     setLevel(n) { this.level = n; }
+
+    // Live-updates the title wherever it's shown (home screen + pause menu)
+    // without rebuilding anything else.
+    setTitle(title) {
+      this.config.title = title;
+      const h = document.getElementById('screen-home-title');
+      if (h) h.textContent = title;
+      const p = document.getElementById('pause-title');
+      if (p) p.textContent = title;
+    }
+
+    // Freezes --accent at a fixed "r, g, b" string instead of letting it
+    // grow with score/level — for tooling (e.g. a theme/template preview)
+    // that wants to show a color choice as-is. Pass null to hand control
+    // back to the normal score/level progression.
+    setAccentOverride(rgb) {
+      this._accentOverride = rgb;
+      this._lastAccentKey = '';
+    }
+
+    // Swaps the whole button set live and re-lays-out the control zones —
+    // for tooling that lets someone try different button counts/labels.
+    setButtons(buttons) {
+      this.config.buttons = buttons;
+      this._wireButtons();
+    }
 
     // ---- DOM scaffolding -----------------------------------------
     _buildDom() {
@@ -421,7 +448,7 @@
       s.id = 'screen-home';
       s.hidden = true;
       s.innerHTML = `
-        <h1 class="screen-title vector-text">${this.config.title || this.gameId.toUpperCase()}</h1>
+        <h1 class="screen-title vector-text" id="screen-home-title">${this.config.title || this.gameId.toUpperCase()}</h1>
         <p class="screen-sub pixel-text blink">TAP TO START</p>
         <div class="side-toggle pixel-text">
           <span class="screen-sub" style="align-self:center;">CONTROLS:</span>
@@ -469,7 +496,7 @@
     _buildPauseScreen() {
       const s = el('div', 'screen', `
         <div class="pause-marquee">
-          <div class="pause-title">${this.config.title || this.gameId.toUpperCase()}</div>
+          <div class="pause-title" id="pause-title">${this.config.title || this.gameId.toUpperCase()}</div>
           <div class="pause-logo" aria-hidden="true">${ATARI_LOGO_SVG}</div>
         </div>
         <button class="btn-pixel primary" id="pause-resume">RESUME</button>
@@ -761,11 +788,15 @@
       this.dom.btnHome.hidden = true;
       this.dom.btnPause.hidden = true;
       this.dom.btnHelp.hidden = true;
+      this._loop(); // start render/parallax loop immediately for ambience
+      // Tooling (e.g. the screen template) wants direct, immediate control
+      // of which screen shows — skip the timed fade so no delayed goHome()
+      // fires later and yanks the user back off whatever they've navigated to.
+      if (this.config.skipBoot) { this.goHome(); return; }
       setTimeout(() => {
         s.classList.add('is-fading');
         setTimeout(() => { s.classList.remove('is-fading'); this.goHome(); }, 400);
       }, 1400);
-      this._loop(); // start render/parallax loop immediately for ambience
     }
 
     goHome() {
@@ -832,6 +863,10 @@
       const advance = () => { s.removeEventListener('click', advance); this._showLeaderboardFlow(); };
       s.addEventListener('click', advance);
     }
+
+    // Public entry point for jumping straight to the leaderboard/high-score
+    // screen (normally only reached via gameOver() -> tap to continue).
+    showLeaderboard() { this._showLeaderboardFlow(); }
 
     _showLeaderboardFlow() {
       this.state = 'leaderboard';
@@ -915,6 +950,12 @@
     // chrome (--accent) moves — gameplay sprites a game draws with a
     // literal color, or via --accent-2/--accent-3, stay fixed.
     _updateAccentColor() {
+      if (this._accentOverride) {
+        if (this._accentOverride === this._lastAccentKey) return;
+        this._lastAccentKey = this._accentOverride;
+        document.documentElement.style.setProperty('--accent-rgb', this._accentOverride);
+        return;
+      }
       const prog = Object.assign(
         { satRampScore: 2500, huePerLevel: 47, hueDriftScore: 3500 },
         this.config.colorProgression || {}

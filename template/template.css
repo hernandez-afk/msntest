@@ -1,0 +1,183 @@
+/*
+  Screen Template — a configurator around the shared shell's blank
+  screens (Home / In-Game / Game Over / High Score), so a designer can
+  see the chrome on its own before a real game fills it in.
+*/
+
+html, body { height: 100%; }
+body {
+  display: block;
+  background: var(--bg-deep);
+  overscroll-behavior: none;
+}
+
+.template-layout {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+}
+@media (max-width: 760px) {
+  .template-layout { flex-direction: column; height: auto; min-height: 100dvh; }
+}
+
+/* ---------------------------------------------------------- panel --- */
+.control-panel {
+  flex: 0 0 auto;
+  width: 300px;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 20px 18px 28px;
+  background: var(--grey-90);
+  box-shadow: inset -1px 0 0 var(--grey-80);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+@media (max-width: 760px) {
+  .control-panel { width: auto; max-height: none; box-shadow: inset 0 -1px 0 var(--grey-80); }
+}
+
+.panel-heading { display: flex; flex-direction: column; gap: 2px; }
+.panel-eyebrow {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--grey-60);
+}
+.panel-title {
+  margin: 0;
+  font-family: var(--font-vector);
+  color: var(--accent);
+  text-shadow: var(--line-glow);
+  font-size: 20px;
+  letter-spacing: .04em;
+}
+
+.panel-group { display: flex; flex-direction: column; gap: 8px; }
+.panel-label {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: var(--ink-dim);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.panel-count { color: var(--accent); }
+
+.tab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tab-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .04em;
+  padding: 10px 6px;
+  background: var(--grey-80);
+  border: 1px solid var(--grey-70);
+  border-radius: 4px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.tab-btn:hover { background: var(--grey-70); }
+.tab-btn.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--black);
+}
+
+.panel-input {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 9px 10px;
+  background: var(--grey-80);
+  border: 1px solid var(--grey-70);
+  border-radius: 4px;
+  color: var(--ink);
+}
+.panel-input::placeholder { color: var(--grey-60); }
+.panel-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.swatch-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch-btn.is-active { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink), 0 0 8px rgba(255,255,255,.4); }
+.swatch-btn.is-auto {
+  background: var(--grey-90) !important;
+  display: grid;
+  place-items: center;
+  color: var(--ink-dim);
+  font-family: var(--font-pixel);
+  font-size: 7px;
+}
+
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper-btn {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 4px;
+  background: var(--grey-80);
+  border: 1px solid var(--grey-70);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepper-btn:hover { background: var(--grey-70); }
+.stepper-btn:disabled { opacity: .35; cursor: default; }
+.stepper-dots { flex: 1 1 auto; display: flex; gap: 6px; justify-content: center; }
+.stepper-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--grey-70);
+  transition: background .15s ease;
+}
+.stepper-dots span.is-filled { background: var(--accent); }
+
+.panel-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--grey-60);
+}
+
+/* ---------------------------------------------------------- stage --- */
+.preview-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--bg-deep);
+  container-type: size;
+}
+@media (max-width: 760px) {
+  .preview-stage { min-height: 60vh; }
+}
+
+.preview-stage #app {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* The shared crt-screen locks its aspect ratio against the viewport
+   (vw/vh) everywhere else, which assumes it's the only thing on screen.
+   Here it shares the page with a sidebar, so re-lock it against this
+   stage container instead, using the same ratio (16∶9-ish). */
+.preview-stage .crt-screen {
+  width: min(100cqw, 177.78cqh);
+  height: min(100cqh, 56.25cqw);
+}
