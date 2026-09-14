@@ -21,6 +21,38 @@
     { name: 'Blue', hex: '#0065B9', rgb: '0, 101, 185' },
   ];
 
+  // The larger Atari Color Spectrum (the brand deck's full PMS set) — a
+  // secondary, lower-saturation palette to complement the 8 bright
+  // primaries above, same {r, g, b} shape for setAccentOverride().
+  const SPECTRUM = [
+    { name: 'PMS 7631 C', hex: '#4C2625', rgb: '76, 38, 37' },
+    { name: 'PMS 4625 C', hex: '#492B20', rgb: '73, 43, 32' },
+    { name: 'PMS 504 C', hex: '#572B28', rgb: '87, 43, 40' },
+    { name: 'PMS 175 C', hex: '#6C302E', rgb: '108, 48, 46' },
+    { name: 'PMS 1685 C', hex: '#8E3C27', rgb: '142, 60, 39' },
+    { name: 'PMS 1605 C', hex: '#AD582A', rgb: '173, 88, 42' },
+    { name: 'PMS 7584 C', hex: '#BE5229', rgb: '190, 82, 41' },
+    { name: 'PMS 7597 C', hex: '#CF472D', rgb: '207, 71, 45' },
+    { name: 'PMS 7578 C', hex: '#DB6D41', rgb: '219, 109, 65' },
+    { name: 'PMS 7576 C', hex: '#DD9058', rgb: '221, 144, 88' },
+    { name: 'PMS 5555 C', hex: '#608154', rgb: '96, 129, 84' },
+    { name: 'PMS 7491 C', hex: '#7F9339', rgb: '127, 147, 57' },
+    { name: 'PMS 7743 C', hex: '#4D6A31', rgb: '77, 106, 49' },
+    { name: 'PMS 5467 C', hex: '#1C3430', rgb: '28, 52, 48' },
+    { name: 'PMS 7690 C', hex: '#096AA7', rgb: '9, 106, 167' },
+    { name: 'PMS 646 C', hex: '#4B7ABA', rgb: '75, 122, 186' },
+    { name: 'PMS 7686 C', hex: '#273C89', rgb: '39, 60, 137' },
+    { name: 'PMS 274 C', hex: '#25215A', rgb: '37, 33, 90' },
+    { name: 'PMS 682 C', hex: '#9E4A97', rgb: '158, 74, 151' },
+    { name: 'PMS 689 C', hex: '#8D3373', rgb: '141, 51, 115' },
+    { name: 'PMS 674 C', hex: '#C4458F', rgb: '196, 69, 143' },
+    { name: 'PMS 7425 C', hex: '#BD1E56', rgb: '189, 30, 86' },
+    { name: 'PMS 191 C', hex: '#EB397A', rgb: '235, 57, 122' },
+    { name: 'PMS 485 C', hex: '#DD2128', rgb: '221, 33, 40' },
+    { name: 'PMS 7580 C', hex: '#CC5748', rgb: '204, 87, 72' },
+    { name: 'PMS 180 C', hex: '#C14340', rgb: '193, 67, 64' },
+  ];
+
   const JOYSTICK_CFG = { label: 'STICK · ↑ THRUST', keys: { left: 'ArrowLeft', right: 'ArrowRight', thrust: 'ArrowUp' } };
 
   // Literal left/right — not tied to the primary/accessory handedness
@@ -97,15 +129,9 @@
     shell.setTitle(titleInput.value.trim() || ' ');
   });
 
-  // ---- color scheme --------------------------------------------------
-  const swatchRow = document.getElementById('color-swatches');
-  const autoBtn = document.createElement('button');
-  autoBtn.className = 'swatch-btn is-auto is-active';
-  autoBtn.textContent = 'AUTO';
-  autoBtn.title = 'Default progressive color (starts white)';
-  swatchRow.appendChild(autoBtn);
-  const swatchButtons = [autoBtn];
-  SCHEMES.forEach((scheme) => {
+  // ---- color scheme — primary (8-sprite) + spectrum (full brand deck) --
+  const swatchButtons = [];
+  function addSwatch(row, scheme) {
     const btn = document.createElement('button');
     btn.className = 'swatch-btn';
     btn.style.background = scheme.hex;
@@ -114,13 +140,26 @@
       shell.setAccentOverride(scheme.rgb);
       swatchButtons.forEach((b) => b.classList.toggle('is-active', b === btn));
     });
-    swatchRow.appendChild(btn);
+    row.appendChild(btn);
     swatchButtons.push(btn);
-  });
+    return btn;
+  }
+
+  const primaryRow = document.getElementById('color-swatches');
+  const autoBtn = document.createElement('button');
+  autoBtn.className = 'swatch-btn is-auto is-active';
+  autoBtn.textContent = 'AUTO';
+  autoBtn.title = 'Default progressive color (starts white)';
   autoBtn.addEventListener('click', () => {
     shell.setAccentOverride(null);
     swatchButtons.forEach((b) => b.classList.toggle('is-active', b === autoBtn));
   });
+  primaryRow.appendChild(autoBtn);
+  swatchButtons.push(autoBtn);
+  SCHEMES.forEach((scheme) => addSwatch(primaryRow, scheme));
+
+  const spectrumRow = document.getElementById('spectrum-swatches');
+  SPECTRUM.forEach((scheme) => addSwatch(spectrumRow, scheme));
 
   // ---- left/right: buttons vs. joystick, and button count --------------
   function renderDots(side) {

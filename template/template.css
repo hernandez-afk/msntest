@@ -99,6 +99,10 @@ body {
 .panel-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .swatch-row { display: flex; flex-wrap: wrap; gap: 10px; }
+/* The spectrum row holds many more swatches (the full brand deck) — a
+   touch smaller and tighter so it doesn't dominate the panel. */
+.swatch-row-spectrum { gap: 7px; }
+.swatch-row-spectrum .swatch-btn { width: 22px; height: 22px; }
 .swatch-btn {
   width: 32px;
   height: 32px;
