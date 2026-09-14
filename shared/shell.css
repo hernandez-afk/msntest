@@ -383,6 +383,20 @@
   margin: 0;
 }
 
+/* The default "vector" title choice renders real hand-drawn stroke
+   glyphs (see vectorTitleSvg in game-shell.js) instead of a web font —
+   sized off the same font-size clamp above via 1em so it matches every
+   other title choice's responsive scale. text-shadow doesn't reach SVG
+   path strokes, so the glow is redone here as a drop-shadow filter. */
+.vector-glyph-title {
+  display: block;
+  height: 1em;
+  width: auto;
+  margin: 0 auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor) drop-shadow(0 0 10px currentColor);
+}
+
 .screen-sub {
   font-size: clamp(9px, 1.8vw, 13px);
   color: var(--ink-dim);

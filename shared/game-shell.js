@@ -45,6 +45,75 @@
   const lerp = (a, b, t) => a + (b - a) * t;
 
   // ---------------------------------------------------------------
+  // Vector title font — the real Atari Asteroids arcade stroke font
+  // (Ed Logg, as reverse-engineered by Trammell Hudson:
+  // https://trmm.net/Asteroids_font/), used for the title header, GAME
+  // OVER, and high-score headings when the "vector" title font is
+  // active — the default look. Rendered as an inline SVG path (not a
+  // web font) so it matches the hand-drawn line-segment art the rest
+  // of a vector-styled game already uses.
+  // ---------------------------------------------------------------
+  const VECTOR_TITLE_GLYPHS = {
+    A: [[[0,6],[0,2],[2,0],[4,2],[4,6]],[[0,4],[4,4]]],
+    B: [[[0,6],[0,0],[3,0],[4,1],[4,2],[3,3],[0,3]],[[3,3],[4,4],[4,5],[3,6],[0,6]]],
+    C: [[[4,0],[0,0],[0,6],[4,6]]],
+    D: [[[0,0],[0,6],[2,6],[4,4],[4,2],[2,0],[0,0]]],
+    E: [[[4,0],[0,0],[0,6],[4,6]],[[0,3],[3,3]]],
+    F: [[[4,0],[0,0],[0,6]],[[0,3],[3,3]]],
+    G: [[[4,1],[4,0],[0,0],[0,6],[4,6],[4,3],[2,3]]],
+    H: [[[0,0],[0,6]],[[4,0],[4,6]],[[0,3],[4,3]]],
+    I: [[[1,0],[3,0]],[[2,0],[2,6]],[[1,6],[3,6]]],
+    J: [[[4,0],[4,5],[3,6],[1,6],[0,5]]],
+    K: [[[0,0],[0,6]],[[4,0],[0,3],[4,6]]],
+    L: [[[0,0],[0,6],[4,6]]],
+    M: [[[0,6],[0,0],[2,2],[4,0],[4,6]]],
+    N: [[[0,6],[0,0],[4,6],[4,0]]],
+    O: [[[0,0],[4,0],[4,6],[0,6],[0,0]]],
+    P: [[[0,6],[0,0],[4,0],[4,3],[0,3]]],
+    Q: [[[0,0],[4,0],[4,6],[0,6],[0,0]],[[2,4],[4,6]]],
+    R: [[[0,6],[0,0],[4,0],[4,3],[0,3]],[[1,3],[4,6]]],
+    S: [[[4,0],[0,0],[0,3],[4,3],[4,6],[0,6]]],
+    T: [[[0,0],[4,0]],[[2,0],[2,6]]],
+    U: [[[0,0],[0,6],[4,6],[4,0]]],
+    V: [[[0,0],[2,6],[4,0]]],
+    W: [[[0,0],[1,6],[2,4],[3,6],[4,0]]],
+    X: [[[0,0],[4,6]],[[4,0],[0,6]]],
+    Y: [[[0,0],[2,2],[4,0]],[[2,2],[2,6]]],
+    Z: [[[0,0],[4,0],[0,6],[4,6]]],
+    '0': [[[0,0],[4,0],[4,6],[0,6],[0,0]],[[4,0],[0,6]]],
+    '1': [[[2,0],[2,6]]],
+    '2': [[[0,0],[4,0],[4,3],[0,3],[0,6],[4,6]]],
+    '3': [[[0,0],[4,0],[4,6],[0,6]],[[1,3],[4,3]]],
+    '4': [[[0,0],[0,3],[4,3]],[[4,0],[4,6]]],
+    '5': [[[4,0],[0,0],[0,3],[4,3],[4,6],[0,6]]],
+    '6': [[[0,0],[0,6],[4,6],[4,3],[0,3]]],
+    '7': [[[0,0],[4,0],[4,6]]],
+    '8': [[[0,0],[4,0],[4,6],[0,6],[0,0]],[[0,3],[4,3]]],
+    '9': [[[4,6],[4,0],[0,0],[0,3],[4,3]]],
+    ' ': [],
+  };
+  function vectorTitlePath(text, size, tracking) {
+    tracking = tracking === undefined ? 1.6 : tracking;
+    const s = size / 6, adv = (4 + tracking) * s;
+    let d = '', x = 0;
+    for (const ch of String(text).toUpperCase()) {
+      const g = VECTOR_TITLE_GLYPHS[ch];
+      if (g) for (const poly of g) {
+        d += poly.map((p, i) => (i ? 'L' : 'M') + (x + p[0] * s).toFixed(2) + ' ' + (p[1] * s).toFixed(2)).join('');
+      }
+      x += adv;
+    }
+    return { d, width: x - tracking * s };
+  }
+  function vectorTitleSvg(text, size) {
+    size = size || 46;
+    const { d, width } = vectorTitlePath(text, size);
+    const pad = 5;
+    const w = (width + pad * 2).toFixed(2), h = (size + pad * 2).toFixed(2);
+    return `<svg class="vector-glyph-title" viewBox="${-pad} ${-pad} ${w} ${h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${String(text).replace(/"/g, '&quot;')}"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"></path></svg>`;
+  }
+
+  // ---------------------------------------------------------------
   // Audio — minimal WebAudio synth, no music, just pings/pongs.
   // ---------------------------------------------------------------
   class AudioEngine {
@@ -333,9 +402,30 @@
     setTitle(title) {
       this.config.title = title;
       const h = document.getElementById('screen-home-title');
-      if (h) h.textContent = title;
+      if (h) this._setTitleText(h, title);
       const p = document.getElementById('pause-title');
       if (p) p.textContent = title;
+    }
+
+    // Renders `text` into a .screen-title element either as plain text
+    // (Poppins/Atari1972/Namco) or as the hand-drawn vector stroke font
+    // (the default "vector" choice) — see setTitleFont(). The original
+    // text is kept on the element so switching modes later can redraw it.
+    _setTitleText(el, text) {
+      el.dataset.titleText = text;
+      this._renderTitleEl(el);
+    }
+    _renderTitleEl(el) {
+      const text = el.dataset.titleText;
+      if (text === undefined) return;
+      if (this._useVectorGlyphTitle()) el.innerHTML = vectorTitleSvg(text);
+      else el.textContent = text;
+    }
+    _useVectorGlyphTitle() {
+      return !this._titleFontToken || this._titleFontToken === '--font-vector';
+    }
+    _refreshTitleGlyphs() {
+      document.querySelectorAll('.screen-title[data-title-text]').forEach((el) => this._renderTitleEl(el));
     }
 
     // Repoints the title header / "GAME OVER" / high-score headings
@@ -343,9 +433,11 @@
     // tokens (e.g. '--font-atari') or null to fall back to the default
     // vector font. For tooling that lets someone try different type.
     setTitleFont(fontToken) {
+      this._titleFontToken = fontToken;
       document.documentElement.style.setProperty('--font-title', fontToken ? `var(${fontToken})` : '');
       // Namco is a single-case display face — see theme.css for why.
       document.documentElement.style.setProperty('--font-title-transform', fontToken === '--font-namco' ? 'lowercase' : '');
+      this._refreshTitleGlyphs();
     }
 
     // Freezes --accent at a fixed "r, g, b" string instead of letting it
@@ -483,7 +575,7 @@
       s.id = 'screen-home';
       s.hidden = true;
       s.innerHTML = `
-        <h1 class="screen-title vector-text" id="screen-home-title">${this.config.title || this.gameId.toUpperCase()}</h1>
+        <h1 class="screen-title vector-text" id="screen-home-title"></h1>
         <p class="screen-sub pixel-text blink">TAP TO START</p>
         <div class="side-toggle pixel-text">
           <span class="screen-sub" style="align-self:center;">CONTROLS:</span>
@@ -491,6 +583,7 @@
           <button class="btn-pixel" id="side-right" aria-pressed="false">RIGHT</button>
         </div>
       `;
+      this._setTitleText(s.querySelector('#screen-home-title'), this.config.title || this.gameId.toUpperCase());
       s.addEventListener('click', (e) => {
         if (e.target.closest('.side-toggle')) return;
         this.startRun();
@@ -514,13 +607,14 @@
 
     _buildHelpScreen() {
       const s = el('div', 'screen', `
-        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)">HOW TO PLAY</h2>
+        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)"></h2>
         <p class="screen-sub pixel-text" style="max-width:70%;line-height:1.8">${this.config.instructions || ''}</p>
         <div class="screen-sub pixel-text" style="opacity:.6">LANGUAGE: EN</div>
         <button class="btn-pixel primary" id="help-close">BACK</button>
       `);
       s.id = 'screen-help';
       s.hidden = true;
+      this._setTitleText(s.querySelector('.screen-title'), 'HOW TO PLAY');
       return s;
     }
 
@@ -912,10 +1006,11 @@
       this.audio.play('explode');
       const s = document.getElementById('screen-gameover');
       s.innerHTML = `
-        <h2 class="screen-title vector-text">GAME OVER</h2>
+        <h2 class="screen-title vector-text"></h2>
         <p class="screen-sub pixel-text">SCORE <strong style="color:var(--accent)">${this.score}</strong></p>
         <p class="screen-sub pixel-text blink">TAP TO CONTINUE</p>
       `;
+      this._setTitleText(s.querySelector('.screen-title'), 'GAME OVER');
       this._hideAllScreens();
       s.hidden = false;
       this.dom.btnHome.hidden = true;
@@ -947,11 +1042,12 @@
       let idx = [0, 0, 0];
       const wrap = el('div', 'screen-flow', '');
       wrap.innerHTML = `
-        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)">NEW HIGH SCORE</h2>
+        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)"></h2>
         <p class="screen-sub">SCORE ${this.score} — ENTER INITIALS</p>
         <div class="initials-entry" id="initials-entry"></div>
         <button class="btn-pixel primary" id="initials-confirm">CONFIRM</button>
       `;
+      this._setTitleText(wrap.querySelector('.screen-title'), 'NEW HIGH SCORE');
       container.appendChild(wrap);
       const entry = wrap.querySelector('#initials-entry');
       const slots = [0, 1, 2].map((i) => {
@@ -987,10 +1083,11 @@
       const list = this.leaderboard.all();
       const wrap = el('div', 'screen-flow', '');
       wrap.innerHTML = `
-        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)">HIGH SCORES</h2>
+        <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)"></h2>
         <ol class="leaderboard-list" id="lb-list"></ol>
         <button class="btn-pixel primary" id="play-again">PLAY AGAIN</button>
       `;
+      this._setTitleText(wrap.querySelector('.screen-title'), 'HIGH SCORES');
       container.appendChild(wrap);
       const ol = wrap.querySelector('#lb-list');
       if (list.length === 0) {
