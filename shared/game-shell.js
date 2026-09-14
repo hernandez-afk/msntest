@@ -327,8 +327,9 @@
       screen.appendChild(el('div', 'vignette'));
       screen.appendChild(el('div', 'scanlines'));
 
-      // Persistent top-left HUD: mute always; home + pause while playing;
-      // help on the home/game-over screens only. No title/logo here —
+      // Persistent top-left HUD: mute always; home while playing; help on
+      // the home/game-over screens only. Hidden entirely while paused —
+      // the pause menu carries its own mute/home. No title/logo here —
       // those only show up inside the pause menu.
       const topleft = el('div', 'hud-topleft');
       topleft.innerHTML = `
@@ -336,10 +337,16 @@
           <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
         </button>
         <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
-        <button class="icon-btn" id="btn-pause" aria-label="Pause" hidden>${ICONS.pause}</button>
         <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
       `;
       screen.appendChild(topleft);
+
+      // Pause lives on the opposite corner from mute/home/help.
+      const topright = el('div', 'hud-topright');
+      topright.innerHTML = `
+        <button class="icon-btn" id="btn-pause" aria-label="Pause" hidden>${ICONS.pause}</button>
+      `;
+      screen.appendChild(topright);
 
       // Center HUD (lives + score [+ optional dust/buff readout]) — gameplay only
       const center = el('div', 'hud-center');
@@ -382,10 +389,11 @@
         hudScore: center.querySelector('#hud-score'),
         hudDust: center.querySelector('#hud-dust'),
         zoneLeft, zoneRight,
+        hudTopleft: topleft,
         btnMute: topleft.querySelector('#btn-mute'),
         btnHome: topleft.querySelector('#btn-home'),
-        btnPause: topleft.querySelector('#btn-pause'),
         btnHelp: topleft.querySelector('#btn-help'),
+        btnPause: topright.querySelector('#btn-pause'),
       };
       this.ctx2d = canvas.getContext('2d');
       this._resizeCanvas();
@@ -754,6 +762,7 @@
       this.dom.btnHome.hidden = true;
       this.dom.btnPause.hidden = true;
       this.dom.btnHelp.hidden = false;
+      this.dom.hudTopleft.hidden = false;
       this.particles.clear();
       this.setDust(null);
     }
@@ -780,11 +789,13 @@
       this.audio.play('select');
       document.getElementById('screen-pause').hidden = false;
       this.dom.btnPause.hidden = true;
+      this.dom.hudTopleft.hidden = true;
     }
     resume() {
       if (this.state !== 'paused') return;
       document.getElementById('screen-pause').hidden = true;
       this.dom.btnPause.hidden = false;
+      this.dom.hudTopleft.hidden = false;
       this.state = 'playing';
     }
 

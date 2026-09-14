@@ -128,7 +128,18 @@
   position: absolute;
   top: var(--hud-inset);
   left: var(--hud-inset);
-  z-index: 40; /* above .screen (30) — mute/home/pause/help stay live everywhere */
+  z-index: 40; /* above .screen (30) — mute/home/help stay live over every screen */
+  display: flex;
+  gap: 10px;
+}
+.hud-topleft[hidden] { display: none; }
+
+/* Pause sits on the opposite corner from mute/home/help. */
+.hud-topright {
+  position: absolute;
+  top: var(--hud-inset);
+  right: var(--hud-inset);
+  z-index: 40;
   display: flex;
   gap: 10px;
 }
