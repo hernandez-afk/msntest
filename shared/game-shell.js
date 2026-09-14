@@ -670,20 +670,39 @@
       return wrap;
     }
 
-    // Dashed dial ring around the stick, traced from plain trig — a gap at
-    // the top (like a real joystick housing's marking), colored live via
-    // var(--accent) so it grows with the rest of the chrome.
+    // Dashed dial ring around the stick — 35 dashes on a 35-slot grid, one
+    // gap at the top, and the dashes flanking each of the 90°/180°/270°
+    // ticks replaced by a taller flared accent shape instead of a plain
+    // dash (traced from the same reference cabinet's dial housing). Built
+    // once from plain trig; colored live via var(--accent).
     _buildJoystickRing(svg) {
-      const cx = 50, cy = 50, SLOTS = 32, GAP_SLOTS = 3;
-      const halfW = 2.2, rIn = 44.5, rOut = 46.5;
+      const cx = 50, cy = 50;
+      const SLOT_COUNT = 35, SLOT_DEG = 360 / SLOT_COUNT;
+      const dashHalfW = 2.27, dashRIn = 44.51, dashROut = 46.58;
+      const dashRectPts = [[-dashHalfW, dashRIn], [dashHalfW, dashRIn], [dashHalfW, dashROut], [-dashHalfW, dashROut]];
+      const flareScale = 0.1284; // reference circle radius (358.3) scaled to this ring's radius (46)
+      const flarePts = [
+        [15.13, 346.69], [-21.16, 346.24], [-22.96, 362.30], [-2.51, 363.34], [12.56, 395.01], [18.95, 394.94],
+      ].map(([t, rr]) => [t * flareScale, rr * flareScale]);
+      const flarePtsMirrored = flarePts.map(([t, rr]) => [-t, rr]);
+      const gapSlots = new Set([SLOT_COUNT - 1, 0, 1]);
+      // The slot immediately before each cardinal tick gets the traced
+      // flare shape as-is; the slot immediately after gets it mirrored.
+      const specialSlots = new Map([
+        [8, flarePts], [9, flarePtsMirrored],
+        [17, flarePts], [18, flarePtsMirrored],
+        [26, flarePts], [27, flarePtsMirrored],
+      ]);
+      const fmt = (n) => n.toFixed(2);
       let markup = '';
-      for (let i = 0; i < SLOTS; i++) {
-        if (i < GAP_SLOTS) continue;
-        const rad = ((i / SLOTS) * 360 - 90) * (Math.PI / 180);
-        const tanX = Math.cos(rad), tanY = Math.sin(rad);
-        const radX = Math.sin(rad), radY = -Math.cos(rad);
-        const pts = [[-halfW, rIn], [halfW, rIn], [halfW, rOut], [-halfW, rOut]]
-          .map(([t, rr]) => `${(cx + tanX * t + radX * rr).toFixed(2)},${(cy + tanY * t + radY * rr).toFixed(2)}`)
+      for (let i = 0; i < SLOT_COUNT; i++) {
+        if (gapSlots.has(i)) continue;
+        const centerRad = i * SLOT_DEG * (Math.PI / 180);
+        const tanX = Math.cos(centerRad), tanY = Math.sin(centerRad);
+        const radX = Math.sin(centerRad), radY = -Math.cos(centerRad);
+        const localPts = specialSlots.get(i) || dashRectPts;
+        const pts = localPts
+          .map(([t, rr]) => `${fmt(cx + tanX * t + radX * rr)},${fmt(cy + tanY * t + radY * rr)}`)
           .join(' ');
         markup += `<polygon points="${pts}" fill="var(--accent)"/>`;
       }
