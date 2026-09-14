@@ -293,7 +293,7 @@
    joystick housing. */
 .joystick-top-label {
   position: absolute;
-  top: 6%;
+  top: 1%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
