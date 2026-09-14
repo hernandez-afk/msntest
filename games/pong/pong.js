@@ -2,7 +2,7 @@
   Pong — same shared shell as Asteroids, proving the layout transfers.
   Blocky-pixel sprites instead of glowing vectors, perpetual-play rules
   (3 lives, chase the high score, per Andreas' notes) instead of race-to-11,
-  and a slow background tint shift to show progression.
+  and the grid's hue shifting a step with every paddle hit.
 */
 (function () {
   'use strict';
@@ -22,6 +22,7 @@
     cpu: null,
     ball: null,
     rallies: 0,
+    hue: 210,
 
     init(shell) {
       this.shell = shell;
@@ -37,7 +38,8 @@
       this.player = { x: shell.width - 26, y: shell.height / 2 - PADDLE_H / 2 };
       this.cpu = { x: 16, y: shell.height / 2 - PADDLE_H / 2 };
       this.rallies = 0;
-      document.documentElement.style.setProperty('--bg-tint', 210);
+      this.hue = 210;
+      document.documentElement.style.setProperty('--bg-tint', this.hue);
       this._serve(shell, 1);
     },
 
@@ -82,7 +84,7 @@
         shell.addScore(smash ? 15 : 10);
         shell.audio.play(smash ? 'confirm' : 'hit');
         shell.particles.burst(ball.x, ball.y, { color: cssColor('--accent-2'), count: smash ? 14 : 7, speed: 90, size: 3 });
-        this._progressTint(shell);
+        this._shiftColor(smash ? 26 : 18);
       }
 
       // cpu paddle collision
@@ -94,6 +96,7 @@
         ball.vy = Math.sin(hit * 1.1) * speed;
         ball.x = cpu.x + PADDLE_W;
         shell.audio.play('bounce');
+        this._shiftColor(8);
       }
 
       // scoring
@@ -106,9 +109,13 @@
       }
     },
 
-    _progressTint(shell) {
-      const hue = (210 + shell.score * 0.6) % 360;
-      document.documentElement.style.setProperty('--bg-tint', hue.toFixed(0));
+    // Every paddle contact nudges the grid's hue — a bigger jump for the
+    // player's own hits (more for a smash) than for the CPU's bounces, so
+    // the field visibly cycles color as a rally goes on rather than
+    // drifting only in proportion to score.
+    _shiftColor(step) {
+      this.hue = (this.hue + step) % 360;
+      document.documentElement.style.setProperty('--bg-tint', this.hue.toFixed(0));
     },
 
     render(ctx, shell) {
