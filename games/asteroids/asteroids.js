@@ -1,27 +1,20 @@
 /*
   Asteroids — built entirely on the shared Atari shell.
-  Only 3 playable buttons per the design spec: SHOOT, THRUST, HYPERSPACE.
-  Steering is drag-to-aim on the play field itself (thumb-friendly, and
-  keeps the button count exactly at three as specified).
+  Classic 5-button cabinet layout: ROTATE LEFT / ROTATE RIGHT (a paired
+  directional unit, always adjacent), THRUST, SHOOT and HYPERSPACE.
 */
 (function () {
   'use strict';
 
   const TAU = Math.PI * 2;
   const wrap = (v, max) => ((v % max) + max) % max;
-  const shortestAngleDelta = (a, b) => {
-    let d = (b - a) % TAU;
-    if (d > Math.PI) d -= TAU;
-    if (d < -Math.PI) d += TAU;
-    return d;
-  };
   const cssColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#fff';
 
   const SIZES = { large: { r: 40, score: 20 }, medium: { r: 22, score: 50 }, small: { r: 12, score: 100 } };
   const NEXT_SIZE = { large: 'medium', medium: 'small', small: null };
   const MAX_BULLETS = 5;
   const SHOOT_COOLDOWN = 0.22;
-  const SHIP_TURN_RATE = 4.2;     // rad/sec toward aim
+  const SHIP_TURN_RATE = 3.4;     // rad/sec while a rotate button is held
   const SHIP_ACCEL = 220;
   const SHIP_DRAG = 0.992;
   const SHIP_RADIUS = 11;
@@ -59,7 +52,6 @@
     bullets: [],
     asteroids: [],
     stars: [],
-    aimAngle: -Math.PI / 2,
     shootCd: 0,
     invuln: 0,
     thrustPulse: 0,
@@ -68,14 +60,6 @@
     init(shell) {
       this.shell = shell;
       this.canvasEl = shell.dom.canvas;
-      const aim = (e) => {
-        if (!this.ship) return;
-        const rect = this.canvasEl.getBoundingClientRect();
-        const x = e.clientX - rect.left, y = e.clientY - rect.top;
-        this.aimAngle = Math.atan2(y - this.ship.y, x - this.ship.x);
-      };
-      this.canvasEl.addEventListener('pointerdown', aim);
-      this.canvasEl.addEventListener('pointermove', (e) => { if (e.buttons) aim(e); });
       this.stars = Array.from({ length: 70 }, () => ({
         x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + 0.3, drift: 4 + Math.random() * 10,
       }));
@@ -83,7 +67,6 @@
 
     start(shell) {
       this.ship = { x: shell.width / 2, y: shell.height / 2, vx: 0, vy: 0, angle: -Math.PI / 2 };
-      this.aimAngle = this.ship.angle;
       this.bullets = [];
       this.asteroids = [];
       this.level = 1;
@@ -129,8 +112,9 @@
       const ship = this.ship;
       const input = shell.input;
 
-      // steering toward drag-aim
-      ship.angle += shortestAngleDelta(ship.angle, this.aimAngle) * Math.min(1, SHIP_TURN_RATE * dt);
+      // steering — rotate-left/rotate-right are a paired directional unit
+      if (input.isDown('rotateLeft')) ship.angle -= SHIP_TURN_RATE * dt;
+      if (input.isDown('rotateRight')) ship.angle += SHIP_TURN_RATE * dt;
 
       // thrust
       if (input.isDown('thrust')) {
@@ -302,13 +286,15 @@
   AtariShell.init({
     gameId: 'asteroids',
     title: 'ASTEROIDS',
-    instructions: 'DRAG ANYWHERE ON THE FIELD TO AIM.<br>THRUST TO ACCELERATE, SHOOT TO FIRE,<br>HYPERSPACE TO TELEPORT OUT OF DANGER.',
+    instructions: 'ROTATE LEFT/RIGHT TO TURN.<br>THRUST TO ACCELERATE, SHOOT TO FIRE,<br>HYPERSPACE TO TELEPORT OUT OF DANGER.',
     accent: '--white',
     accent2: '--yellow',
     accent3: '--atari-red',
     livesStart: 3,
     controlsDefaultSide: 'right',
     buttons: [
+      { id: 'rotateLeft', label: 'LEFT', key: 'ArrowLeft', hold: true, pair: 'rotate', dir: 'left' },
+      { id: 'rotateRight', label: 'RIGHT', key: 'ArrowRight', hold: true, pair: 'rotate', dir: 'right' },
       { id: 'thrust', label: 'THRUST', key: 'ArrowUp', hold: true },
       { id: 'shoot', label: 'SHOOT', key: ' ', hold: true },
       { id: 'hyper', label: 'HYPERSPACE', key: 'Shift', hold: false, accessory: true },

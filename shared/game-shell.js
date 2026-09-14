@@ -235,6 +235,15 @@
     <path d="M50 14 C30 26, 18 36, 15 52 C25 47, 37 44, 50 44 C63 44, 75 47, 85 52 C82 36, 70 26, 50 14Z" fill="none" stroke="currentColor" stroke-width="3"/>
   </svg>`;
 
+  // One icon set, one visual language (stroke = currentColor, same viewBox)
+  // so the top-left HUD reads as matching buttons, never mismatched emoji.
+  const ICONS = {
+    unmuted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16.2 8.8a5 5 0 0 1 0 6.4"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>`,
+    muted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M15.5 9.5l5 5"/><path d="M20.5 9.5l-5 5"/></svg>`,
+    home: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-5h6v5h3a1 1 0 0 0 1-1v-9"/></svg>`,
+    help: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.6a2.7 2.7 0 1 1 4.2 2.2c-.9.6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17.2" r="0.75" fill="currentColor" stroke="none"/></svg>`,
+  };
+
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   // ---------------------------------------------------------------
@@ -259,6 +268,9 @@
       if (config.accent) document.documentElement.style.setProperty('--accent', cssVar(config.accent));
       if (config.accent2) document.documentElement.style.setProperty('--accent-2', cssVar(config.accent2));
       if (config.accent3) document.documentElement.style.setProperty('--accent-3', cssVar(config.accent3));
+      // plain/legible text defaults to Poppins (theme.css); a game may swap
+      // its whole body typeface for something more fitting its own system
+      if (config.bodyFont) document.documentElement.style.setProperty('--font-body', config.bodyFont);
 
       this._buildDom();
       this._wireHud();
@@ -285,10 +297,10 @@
       const topleft = el('div', 'hud-topleft');
       topleft.innerHTML = `
         <button class="icon-btn" id="btn-mute" aria-label="Mute">
-          <span class="icon-unmuted">\u{1F50A}</span><span class="icon-muted">\u{1F507}</span>
+          <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
         </button>
-        <button class="icon-btn" id="btn-home" aria-label="Home" hidden>⌂</button>
-        <button class="icon-btn" id="btn-help" aria-label="How to play">?</button>
+        <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
+        <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
       `;
       screen.appendChild(topleft);
 
@@ -432,21 +444,69 @@
       document.getElementById('side-right').setAttribute('aria-pressed', String(this.side === 'right'));
     }
 
-    _openHelp() { document.getElementById('screen-help').hidden = false; }
-    _closeHelp() { document.getElementById('screen-help').hidden = true; }
+    _openHelp() {
+      this._returnTo = this.state === 'home' ? 'screen-home' : null;
+      if (this._returnTo) document.getElementById(this._returnTo).hidden = true;
+      document.getElementById('screen-help').hidden = false;
+    }
+    _closeHelp() {
+      document.getElementById('screen-help').hidden = true;
+      if (this._returnTo) document.getElementById(this._returnTo).hidden = false;
+    }
 
     // ---- Control buttons ---------------------------------------------
+    // Longer labels get a smaller, tighter-wrapping font so the word
+    // always stays inside the circle instead of running past its edge.
+    static _fitLabelSize(label) {
+      const len = label.length;
+      if (len <= 4) return 'clamp(10px, 1.7vw, 13px)';
+      if (len <= 6) return 'clamp(9px, 1.5vw, 11.5px)';
+      if (len <= 9) return 'clamp(7.5px, 1.25vw, 10px)';
+      return 'clamp(6.5px, 1.05vw, 8.5px)';
+    }
+
     _wireButtons() {
       const buttons = this.config.buttons || [];
       this._buttonEls = {};
       buttons.forEach((b) => {
-        const btn = el('button', 'btn-control pixel-text' + (b.accessory ? '' : ' accent-2'), b.label);
+        const btn = el('button', 'btn-control' + (b.accessory ? '' : ' accent-2'));
+        const labelSpan = el('span', 'btn-label', b.label);
+        labelSpan.style.fontSize = Shell._fitLabelSize(b.label);
+        btn.appendChild(labelSpan);
         btn.dataset.action = b.id;
         this.input.attachButton(btn, b.id);
         this.input.bindKey(b.key, b.id);
         this._buttonEls[b.id] = { el: btn, cfg: b };
       });
       this._layoutButtons();
+    }
+
+    // Buttons that share a `pair` id render as one row (left/right) or
+    // one column (up/down) so directional controls read as a matched unit.
+    _groupForZone(buttons, wantAccessory) {
+      const items = [];
+      const pairIndex = {};
+      const DIR_ORDER = { left: 0, up: 0, right: 1, down: 1 };
+      buttons
+        .filter((b) => Boolean(b.accessory) === wantAccessory)
+        .forEach((b) => {
+          const btnEl = this._buttonEls[b.id].el;
+          if (b.pair) {
+            let group = pairIndex[b.pair];
+            if (!group) {
+              group = { pair: b.pair, entries: [] };
+              pairIndex[b.pair] = group;
+              items.push(group);
+            }
+            group.entries.push({ el: btnEl, dir: b.dir });
+          } else {
+            items.push(btnEl);
+          }
+        });
+      items.forEach((item) => {
+        if (item.entries) item.entries.sort((a, c) => (DIR_ORDER[a.dir] ?? 0) - (DIR_ORDER[c.dir] ?? 0));
+      });
+      return items;
     }
 
     _layoutButtons() {
@@ -457,10 +517,18 @@
       const accessoryZone = this.side === 'left' ? this.dom.zoneRight : this.dom.zoneLeft;
       primaryZone.classList.remove('accessory');
       accessoryZone.classList.add('accessory');
-      buttons.forEach((b) => {
-        const { el: btnEl } = this._buttonEls[b.id];
-        (b.accessory ? accessoryZone : primaryZone).appendChild(btnEl);
-      });
+
+      const render = (zoneEl, wantAccessory) => {
+        this._groupForZone(buttons, wantAccessory).forEach((item) => {
+          if (item instanceof HTMLElement) { zoneEl.appendChild(item); return; }
+          const isRow = item.entries.some((e) => e.dir === 'left' || e.dir === 'right');
+          const wrap = el('div', 'btn-pair ' + (isRow ? 'dir-row' : 'dir-column'));
+          item.entries.forEach((e) => wrap.appendChild(e.el));
+          zoneEl.appendChild(wrap);
+        });
+      };
+      render(primaryZone, false);
+      render(accessoryZone, true);
     }
 
     // ---- Lives / score -------------------------------------------------

@@ -142,8 +142,8 @@
     livesStart: 3,
     controlsDefaultSide: 'right',
     buttons: [
-      { id: 'up', label: 'UP', key: 'ArrowUp', hold: true },
-      { id: 'down', label: 'DOWN', key: 'ArrowDown', hold: true },
+      { id: 'up', label: 'UP', key: 'ArrowUp', hold: true, pair: 'move', dir: 'up' },
+      { id: 'down', label: 'DOWN', key: 'ArrowDown', hold: true, pair: 'move', dir: 'down' },
       { id: 'smash', label: 'SMASH', key: 'Shift', hold: true, accessory: true },
     ],
     onInit: (shell) => game.init(shell),
