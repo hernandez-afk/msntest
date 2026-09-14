@@ -446,7 +446,8 @@
     }
 
     _openHelp() {
-      this._returnTo = this.state === 'home' ? 'screen-home' : null;
+      const returnScreen = { home: 'screen-home', gameover: 'screen-gameover' };
+      this._returnTo = returnScreen[this.state] || null;
       if (this._returnTo) document.getElementById(this._returnTo).hidden = true;
       document.getElementById('screen-help').hidden = false;
     }
@@ -564,6 +565,7 @@
       const s = document.getElementById('screen-boot');
       s.hidden = false;
       this.dom.btnHome.hidden = true;
+      this.dom.btnHelp.hidden = true;
       setTimeout(() => {
         s.classList.add('is-fading');
         setTimeout(() => { s.classList.remove('is-fading'); this.goHome(); }, 400);
@@ -579,6 +581,7 @@
       this.dom.zoneLeft.style.visibility = 'hidden';
       this.dom.zoneRight.style.visibility = 'hidden';
       this.dom.btnHome.hidden = true;
+      this.dom.btnHelp.hidden = false;
       this.particles.clear();
     }
 
@@ -590,6 +593,7 @@
       this.dom.zoneLeft.style.visibility = 'visible';
       this.dom.zoneRight.style.visibility = 'visible';
       this.dom.btnHome.hidden = false;
+      this.dom.btnHelp.hidden = true;
       this.setScore(0);
       this.setLives(this.config.livesStart ?? 3);
       if (this.config.onStart) this.config.onStart(this);
@@ -616,6 +620,7 @@
       this._hideAllScreens();
       s.hidden = false;
       this.dom.btnHome.hidden = true;
+      this.dom.btnHelp.hidden = false;
       const advance = () => { s.removeEventListener('click', advance); this._showLeaderboardFlow(); };
       s.addEventListener('click', advance);
     }
@@ -631,6 +636,7 @@
         this._renderLeaderboardList(s, null);
       }
       s.hidden = false;
+      this.dom.btnHelp.hidden = true;
     }
 
     _renderInitialsEntry(container) {
