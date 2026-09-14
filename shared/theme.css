@@ -9,6 +9,19 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500;700;900&family=Poppins:wght@400;500;600;700&display=swap');
 
+/* The real Atari 1972 wordmark face — used only for the header/marquee
+   title, never inside the play field itself. */
+@font-face {
+  font-family: 'Atari1972';
+  src: url('fonts/Atari1972-Bold.otf') format('opentype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Atari1972';
+  src: url('fonts/Atari1972-Regular.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
 :root {
   /* ---- Atari brand core ---- */
   --atari-red: #E01E2B;
@@ -48,8 +61,16 @@
   --grey-15:  #E0E0E0;
   --grey-5:   #F5F5F5;
 
-  /* ---- Per-game accent (override in each game's stylesheet) ---- */
-  --accent: var(--sprite-3);      /* primary sprite / vector color */
+  /* ---- Cabinet accent ----
+     --accent is the ONE color that grows/rotates as a run progresses (see
+     Shell._updateAccentColor): every cabinet starts pure white and gains
+     saturation + a per-level hue shift as score/level climb. Gameplay
+     sprites stay fixed colors (drawn straight from --accent-2/--accent-3
+     or a literal), so only the chrome — title, buttons, joystick, glow —
+     visibly "grows" its color. --accent-2/--accent-3 are ordinary static
+     per-game overrides, same as before. */
+  --accent-rgb: 255, 255, 255;
+  --accent: rgb(var(--accent-rgb));
   --accent-2: var(--sprite-8);    /* secondary sprite color */
   --accent-3: var(--sprite-2);    /* danger / highlight */
   --bg-tint: 210;                 /* hue-ish knob for background grid tint, degrees */
@@ -71,6 +92,7 @@
   --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-pixel: 'Press Start 2P', 'Courier New', monospace;   /* blocky – Pong/Breakout */
   --font-vector: 'Orbitron', 'Courier New', monospace;        /* vector-line feel – Asteroids/Tempest */
+  --font-atari: 'Atari1972', var(--font-vector);              /* header/marquee title only */
 
   /* ---- Vector line rules: one consistent thickness + faint glow ---- */
   --line-width: 2px;

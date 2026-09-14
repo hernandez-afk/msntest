@@ -16,15 +16,22 @@
     accent: '--yellow',             // CSS var name (or hex) for primary sprite color
     accent2: '--blue',
     livesStart: 3,
-    controlsDefaultSide: 'right',   // 'left' | 'right' — which side holds primary buttons
-    buttons: [                      // primary + accessory action buttons
-      { id: 'thrust', label: 'THRUST', key: 'ArrowUp',   hold: true  },
-      { id: 'shoot',  label: 'SHOOT',  key: ' ',         hold: true  },
-      { id: 'hyper',  label: 'HYPER',  key: 'Shift',     hold: false, accessory: true },
+    controlsDefaultSide: 'right',   // 'left' | 'right' — which side holds primary controls
+    joystick: {                     // optional: analog stick instead of directional buttons
+      label: 'STICK · ↑ THRUST',
+      keys: { left: 'ArrowLeft', right: 'ArrowRight', thrust: 'ArrowUp' },
+    },
+    buttons: [                      // remaining action buttons (shoot/hyper etc.)
+      { id: 'shoot',  label: 'SHOOT',  key: ' ',     hold: true,  accessory: true },
+      { id: 'hyper',  label: 'HYPER',  key: 'Shift', hold: false, accessory: true },
     ],
+    colorProgression: {              // optional overrides for the accent-growth curve
+      satRampScore: 2500, huePerLevel: 47, hueDriftScore: 3500,
+    },
     onInit(shell) {},               // called once, wire up your game object
     onStart(shell) {},              // called every time a run begins
-    onUpdate(dt, shell) {},         // called each frame while playing
+    onUpdate(dt, shell) {},         // called each frame while playing — read shell.input.turn/
+                                     // .thrust (-1..1 / 0..1) when using a joystick
     onRender(ctx, shell) {},        // called each frame while playing
   }
 */
@@ -88,6 +95,7 @@
         confirm: { freq: 523, dur: 0.09, type: 'square', slideTo: 1046 },
         life_lost: { freq: 260, dur: 0.35, type: 'sawtooth', slideTo: 60, gain: 0.2 },
         levelup: { freq: 392, dur: 0.14, type: 'square', slideTo: 784 },
+        collect: { freq: 1200, dur: 0.04, type: 'sine', gain: 0.05 },
       };
       this.blip(presets[name] || presets.select);
     }
@@ -235,6 +243,11 @@
     <path d="M50 14 C30 26, 18 36, 15 52 C25 47, 37 44, 50 44 C63 44, 75 47, 85 52 C82 36, 70 26, 50 14Z" fill="none" stroke="currentColor" stroke-width="3"/>
   </svg>`;
 
+  // The real Atari brand mark (wordmark + Fuji), for the persistent header
+  // only — always solid white, never re-tinted by the progressive accent,
+  // same as a real cabinet's badge stays a fixed brand color.
+  const ATARI_LOGO_SVG = `<svg viewBox="0 0 607.29 140.94" xmlns="http://www.w3.org/2000/svg"><polygon class="cls-1" points="355.24 0.23 275.78 0.23 275.78 21.53 305.01 21.53 305.01 140.94 325.89 140.94 325.89 21.53 355.24 21.53 355.24 0.23"></polygon><rect class="cls-1" x="558.74" y="0.23" width="22.11" height="140.7"></rect><path class="cls-1" d="M222.88,85.6l15.6-53.77L254.09,85.6Zm32-72.06C252.83,5.44,246.63,0,238.49,0a16.69,16.69,0,0,0-15.55,10.62h0l0,.08c-.33.88-37.81,130.24-37.81,130.24h21.7l10.32-35.46h42.75l10.25,35.41H292Z"></path><path class="cls-1" d="M378.31,85.6l15.56-53.77L409.42,85.6Zm31.91-72.06C408.16,5.44,402,0,393.87,0a16.7,16.7,0,0,0-15.51,10.62h0l0,.08c-.33.88-37.81,130.24-37.81,130.24h21.7l10.32-35.46H415.2l10.22,35.41h21.87Z"></path><path class="cls-1" d="M539.77,37.29s.59,5.1-.86,15.34C536,69,525.76,75.6,521.48,78.1s-6.68,4.23-6.68,4.23a5.31,5.31,0,0,0-2.08,4.22,8,8,0,0,0,1.31,4.5s1.49,2.1,5.77,8.67,27.6,41.22,27.6,41.22H522.7L490.83,92.7c-3.65-5.34-3.65-9.07-3.65-11.13,0-7,3.85-11.64,9.87-14.19,0,0,21.93-7.13,21.93-24.24a32.22,32.22,0,0,0-1.13-8.86A17.49,17.49,0,0,0,501.4,21.4l-16.79.05a4.8,4.8,0,0,0-4.79,4.8V140.94H458.74V18.08A17.76,17.76,0,0,1,476.39.23h24.52a38.9,38.9,0,0,1,38.9,38.9"></path><path class="cls-1" d="M597.09,132.44h1.7a2.68,2.68,0,0,0,1.66-.36,1.17,1.17,0,0,0,.45-1,1.22,1.22,0,0,0-.21-.69,1.37,1.37,0,0,0-.6-.45,4.36,4.36,0,0,0-1.4-.15h-1.6Zm-1.39,4.89v-8.68h3a7.18,7.18,0,0,1,2.21.25,2,2,0,0,1,1.1.84,2.17,2.17,0,0,1,.4,1.26,2.35,2.35,0,0,1-.67,1.66,2.69,2.69,0,0,1-1.81.79,2.4,2.4,0,0,1,.74.46,10.1,10.1,0,0,1,1.28,1.72l1.06,1.7h-1.71L600.5,136a6.79,6.79,0,0,0-1.46-2,1.89,1.89,0,0,0-1.12-.29h-.83v3.68Zm3.53-11.18a7,7,0,0,0-3.31.86,6.35,6.35,0,0,0-2.52,2.49,7,7,0,0,0-.91,3.38,6.83,6.83,0,0,0,.9,3.34,6.28,6.28,0,0,0,2.49,2.49,6.73,6.73,0,0,0,6.69,0,6.24,6.24,0,0,0,2.5-2.49,6.79,6.79,0,0,0,0-6.72,6.23,6.23,0,0,0-2.52-2.49,7,7,0,0,0-3.3-.86m0-1.34a8.36,8.36,0,0,1,4,1,7.53,7.53,0,0,1,3,3,8.36,8.36,0,0,1,1.08,4,8.2,8.2,0,0,1-1.07,4,7.56,7.56,0,0,1-3,3,8.13,8.13,0,0,1-8,0,7.56,7.56,0,0,1-3-3,8.09,8.09,0,0,1-1.07-4,8.25,8.25,0,0,1,1.08-4,7.46,7.46,0,0,1,3-3,8.3,8.3,0,0,1,4-1"></path><path class="cls-1" d="M0,140.94s23-2.59,40.89-17.38c17.06-14,23.22-26.18,27.47-39.92s4.91-46.77,4.91-56.58V.23H62.67s0,2.71,0,9.93C62.47,25,61.19,53.31,54.37,71.7,37.91,116.07,0,120,0,120Z"></path><path class="cls-1" d="M174.89,140.94s-23-2.59-40.89-17.38c-17.06-14-23.22-26.18-27.47-39.92s-4.91-46.77-4.91-56.58V.23h10.6s0,2.71,0,9.93c.19,14.88,1.47,43.15,8.29,61.54C137,116.07,174.89,120,174.89,120Z"></path><rect class="cls-1" x="77.66" y="0.23" width="19.58" height="140.7"></rect></svg>`;
+
   // One icon set, one visual language (stroke = currentColor, same 24x24
   // box, optically balanced within it) so the top-left HUD reads as
   // matching buttons, never mismatched emoji.
@@ -247,6 +260,16 @@
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+  // Cabinet accent progression: every game starts pure white and grows
+  // saturated + hue-shifts as score/level climb (see Shell._updateAccentColor).
+  function hslToRgb(h, s, l) {
+    s /= 100; l /= 100;
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [Math.round(255 * f(0)), Math.round(255 * f(8)), Math.round(255 * f(4))];
+  }
+
   // ---------------------------------------------------------------
   // Shell — orchestrates state machine + builds the chrome DOM.
   // ---------------------------------------------------------------
@@ -256,17 +279,23 @@
       this.gameId = config.gameId;
       this.state = 'boot';
       this.score = 0;
+      this.level = 1;
       this.lives = config.livesStart ?? 3;
       this.side = localStorage.getItem(`atari:side:${this.gameId}`) || config.controlsDefaultSide || 'right';
       this.audio = new AudioEngine(this.gameId);
       this.particles = new ParticleSystem();
       this.input = new InputManager();
+      this.input.turn = 0;
+      this.input.thrust = 0;
       this.leaderboard = new Leaderboard(this.gameId);
       this._raf = null;
       this._lastT = 0;
       this._gridPhase = 0;
+      this._lastAccentKey = '';
 
-      if (config.accent) document.documentElement.style.setProperty('--accent', cssVar(config.accent));
+      // --accent itself is progressive (see _updateAccentColor) — every
+      // cabinet starts white and grows color as score/level climb.
+      // accent-2/accent-3 stay ordinary static per-game overrides.
       if (config.accent2) document.documentElement.style.setProperty('--accent-2', cssVar(config.accent2));
       if (config.accent3) document.documentElement.style.setProperty('--accent-3', cssVar(config.accent3));
       // plain/legible text defaults to Poppins (theme.css); a game may swap
@@ -275,6 +304,7 @@
 
       this._buildDom();
       this._wireHud();
+      if (config.joystick) this._joystickEl = this._buildJoystick(config.joystick);
       this._wireButtons();
       this.input.attachKeyboard();
 
@@ -283,9 +313,30 @@
       this._showBoot();
     }
 
+    setLevel(n) { this.level = n; }
+
     // ---- DOM scaffolding -----------------------------------------
     _buildDom() {
       const root = document.getElementById('app') || document.body;
+      const cabinet = el('div', 'cabinet');
+
+      // Header bar — title (Atari1972) + mute/home/help + the Atari badge.
+      // A separate strip above the CRT glass, hidden only during boot.
+      const header = el('div', 'header-bar');
+      header.hidden = true;
+      header.innerHTML = `
+        <div class="header-title" id="header-title"></div>
+        <div class="header-controls" id="header-controls">
+          <button class="icon-btn" id="btn-mute" aria-label="Mute">
+            <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
+          </button>
+          <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
+          <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
+        </div>
+        <div class="header-logo" aria-hidden="true">${ATARI_LOGO_SVG}</div>
+      `;
+      cabinet.appendChild(header);
+
       const screen = el('div', 'crt-screen');
       screen.appendChild(el('div', 'grid-bg'));
       const canvas = el('canvas', null);
@@ -294,28 +345,19 @@
       screen.appendChild(el('div', 'vignette'));
       screen.appendChild(el('div', 'scanlines'));
 
-      // Persistent top-left HUD
-      const topleft = el('div', 'hud-topleft');
-      topleft.innerHTML = `
-        <button class="icon-btn" id="btn-mute" aria-label="Mute">
-          <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
-        </button>
-        <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
-        <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
-      `;
-      screen.appendChild(topleft);
-
-      // Center HUD (lives + score) — gameplay only
+      // Center HUD (lives + score [+ optional dust/buff readout]) — gameplay only
       const center = el('div', 'hud-center');
       center.id = 'hud-center';
       center.hidden = true;
       center.innerHTML = `
         <div class="hud-lives" id="hud-lives"></div>
         <div class="hud-score"><span class="label">SCORE</span><span id="hud-score">0</span></div>
+        <div class="hud-dust" id="hud-dust"></div>
       `;
       screen.appendChild(center);
 
-      // Control zones
+      // Control zones — buttons/joystick float directly over the play
+      // field (translucent), never in a separate control-deck strip.
       const zoneLeft = el('div', 'controls-zone side-left');
       zoneLeft.id = 'zone-left';
       const zoneRight = el('div', 'controls-zone side-right');
@@ -330,22 +372,28 @@
       screen.appendChild(this._buildLeaderboardScreen());
       screen.appendChild(this._buildHelpScreen());
 
+      cabinet.appendChild(screen);
+
       const rotatePrompt = el('div', 'rotate-prompt', 'ROTATE YOUR DEVICE<br>TO LANDSCAPE TO PLAY');
       rotatePrompt.classList.add('is-armed');
       document.body.appendChild(rotatePrompt);
 
-      root.appendChild(screen);
+      root.appendChild(cabinet);
       this.dom = {
+        cabinet, header,
+        headerTitle: header.querySelector('#header-title'),
         screen, canvas,
         gridBg: screen.querySelector('.grid-bg'),
         hudCenter: center,
         hudLives: center.querySelector('#hud-lives'),
         hudScore: center.querySelector('#hud-score'),
+        hudDust: center.querySelector('#hud-dust'),
         zoneLeft, zoneRight,
-        btnMute: topleft.querySelector('#btn-mute'),
-        btnHome: topleft.querySelector('#btn-home'),
-        btnHelp: topleft.querySelector('#btn-help'),
+        btnMute: header.querySelector('#btn-mute'),
+        btnHome: header.querySelector('#btn-home'),
+        btnHelp: header.querySelector('#btn-help'),
       };
+      this.dom.headerTitle.textContent = this.config.title || this.gameId.toUpperCase();
       this.ctx2d = canvas.getContext('2d');
       this._resizeCanvas();
       global.addEventListener('resize', () => this._resizeCanvas());
@@ -520,6 +568,8 @@
       primaryZone.classList.remove('accessory');
       accessoryZone.classList.add('accessory');
 
+      if (this._joystickEl) primaryZone.appendChild(this._joystickEl);
+
       const render = (zoneEl, wantAccessory) => {
         this._groupForZone(buttons, wantAccessory).forEach((item) => {
           if (item instanceof HTMLElement) { zoneEl.appendChild(item); return; }
@@ -531,6 +581,91 @@
       };
       render(primaryZone, false);
       render(accessoryZone, true);
+    }
+
+    // ---- Joystick (optional, replaces directional buttons) -----------
+    // Analog turn (x) + analog thrust (up), drag distance clamped to
+    // JOY_MAX_PX. Keyboard (if configured) and drag both feed the same
+    // shell.input.turn/.thrust — whichever is more extreme each frame wins.
+    _buildJoystick(cfg) {
+      const wrap = el('div', 'joystick-wrap');
+      wrap.innerHTML = `
+        <div class="joystick-base" id="joy-base">
+          <svg class="joystick-ring" viewBox="0 0 100 100"></svg>
+          <div class="joystick-knob"></div>
+        </div>
+        <div class="joystick-label">${cfg.label || 'STICK'}</div>
+      `;
+      const base = wrap.querySelector('.joystick-base');
+      const knob = wrap.querySelector('.joystick-knob');
+      this._buildJoystickRing(wrap.querySelector('.joystick-ring'));
+
+      const JOY_MAX_PX = 30;
+      let active = false, cx = 0, cy = 0;
+      this._joyDrag = { turn: 0, thrust: 0 };
+      const apply = (clientX, clientY) => {
+        let dx = clientX - cx, dy = clientY - cy;
+        const m = Math.hypot(dx, dy);
+        if (m > JOY_MAX_PX) { dx = (dx / m) * JOY_MAX_PX; dy = (dy / m) * JOY_MAX_PX; }
+        knob.style.transform = `translate(${dx}px, ${dy}px)`;
+        this._joyDrag.turn = clamp(Math.abs(dx) / JOY_MAX_PX, 0, 1) * Math.sign(dx);
+        this._joyDrag.thrust = dy < 0 ? clamp(-dy / JOY_MAX_PX, 0, 1) : 0;
+      };
+      const reset = () => {
+        active = false;
+        knob.style.transform = 'translate(0px, 0px)';
+        this._joyDrag.turn = 0;
+        this._joyDrag.thrust = 0;
+      };
+      base.addEventListener('pointerdown', (e) => {
+        base.setPointerCapture(e.pointerId);
+        const r = base.getBoundingClientRect();
+        cx = r.left + r.width / 2;
+        cy = r.top + r.height / 2;
+        active = true;
+        apply(e.clientX, e.clientY);
+      });
+      base.addEventListener('pointermove', (e) => { if (active) apply(e.clientX, e.clientY); });
+      base.addEventListener('pointerup', reset);
+      base.addEventListener('pointercancel', reset);
+      base.addEventListener('pointerleave', (e) => { if (e.buttons === 0) reset(); });
+
+      if (cfg.keys) {
+        this.input.bindKey(cfg.keys.left, 'joyLeft');
+        this.input.bindKey(cfg.keys.right, 'joyRight');
+        this.input.bindKey(cfg.keys.thrust, 'joyThrust');
+      }
+      return wrap;
+    }
+
+    // Dashed dial ring around the stick, traced from plain trig — a gap at
+    // the top (like a real joystick housing's marking), colored live via
+    // var(--accent) so it grows with the rest of the chrome.
+    _buildJoystickRing(svg) {
+      const cx = 50, cy = 50, SLOTS = 32, GAP_SLOTS = 3;
+      const halfW = 2.2, rIn = 44.5, rOut = 46.5;
+      let markup = '';
+      for (let i = 0; i < SLOTS; i++) {
+        if (i < GAP_SLOTS) continue;
+        const rad = ((i / SLOTS) * 360 - 90) * (Math.PI / 180);
+        const tanX = Math.cos(rad), tanY = Math.sin(rad);
+        const radX = Math.sin(rad), radY = -Math.cos(rad);
+        const pts = [[-halfW, rIn], [halfW, rIn], [halfW, rOut], [-halfW, rOut]]
+          .map(([t, rr]) => `${(cx + tanX * t + radX * rr).toFixed(2)},${(cy + tanY * t + radY * rr).toFixed(2)}`)
+          .join(' ');
+        markup += `<polygon points="${pts}" fill="var(--accent)"/>`;
+      }
+      svg.innerHTML = markup;
+    }
+
+    // Combines keyboard (digital) and drag (analog) into one live turn/
+    // thrust pair each frame — called only while a joystick is configured.
+    _updateJoystickInput() {
+      const kbTurn = (this.input.isDown('joyRight') ? 1 : 0) - (this.input.isDown('joyLeft') ? 1 : 0);
+      const dragTurn = this._joyDrag.turn;
+      this.input.turn = Math.abs(kbTurn) >= Math.abs(dragTurn) ? kbTurn : dragTurn;
+      const kbThrust = this.input.isDown('joyThrust') ? 1 : 0;
+      this.input.thrust = Math.max(kbThrust, this._joyDrag.thrust);
     }
 
     // ---- Lives / score -------------------------------------------------
@@ -552,6 +687,17 @@
       return this.lives;
     }
 
+    // Optional per-game readout under the score (e.g. Asteroids' dust
+    // meter + active buff). Call with no args to clear it.
+    setDust(pct, buffLabel, secondsLeft) {
+      if (pct == null) { this.dom.hudDust.innerHTML = ''; return; }
+      let html = `DUST ${Math.round(pct)}%`;
+      if (buffLabel) {
+        html += `<span class="buff">${buffLabel}${secondsLeft != null ? ' ' + Math.ceil(secondsLeft) + 'S' : ''}</span>`;
+      }
+      this.dom.hudDust.innerHTML = html;
+    }
+
     // ---- State machine ---------------------------------------------
     _hideAllScreens() {
       ['screen-boot', 'screen-home', 'screen-gameover', 'screen-leaderboard'].forEach((id) => {
@@ -564,6 +710,7 @@
       this._hideAllScreens();
       const s = document.getElementById('screen-boot');
       s.hidden = false;
+      this.dom.header.hidden = true;
       this.dom.btnHome.hidden = true;
       this.dom.btnHelp.hidden = true;
       setTimeout(() => {
@@ -577,12 +724,14 @@
       this.state = 'home';
       this._hideAllScreens();
       document.getElementById('screen-home').hidden = false;
+      this.dom.header.hidden = false;
       this.dom.hudCenter.hidden = true;
       this.dom.zoneLeft.style.visibility = 'hidden';
       this.dom.zoneRight.style.visibility = 'hidden';
       this.dom.btnHome.hidden = true;
       this.dom.btnHelp.hidden = false;
       this.particles.clear();
+      this.setDust(null);
     }
 
     startRun() {
@@ -595,6 +744,7 @@
       this.dom.btnHome.hidden = false;
       this.dom.btnHelp.hidden = true;
       this.setScore(0);
+      this.setLevel(1);
       this.setLives(this.config.livesStart ?? 3);
       if (this.config.onStart) this.config.onStart(this);
     }
@@ -701,6 +851,28 @@
       wrap.querySelector('#play-again').addEventListener('click', () => this.goHome());
     }
 
+    // ---- Cabinet accent color -----------------------------------------
+    // Starts pure white; grows saturated (score) and rotates hue (level),
+    // with a slow in-level drift too so it never feels static. Only the
+    // chrome (--accent) moves — gameplay sprites a game draws with a
+    // literal color, or via --accent-2/--accent-3, stay fixed.
+    _updateAccentColor() {
+      const prog = Object.assign(
+        { satRampScore: 2500, huePerLevel: 47, hueDriftScore: 3500 },
+        this.config.colorProgression || {}
+      );
+      const satT = clamp(this.score / prog.satRampScore, 0, 1);
+      const hue = (((this.level - 1) * prog.huePerLevel) +
+        ((this.score % prog.hueDriftScore) / prog.hueDriftScore) * prog.huePerLevel) % 360;
+      const sat = satT * 88;
+      const light = 96 - satT * 38;
+      const [r, g, b] = hslToRgb(hue, sat, light);
+      const key = `${r}, ${g}, ${b}`;
+      if (key === this._lastAccentKey) return;
+      this._lastAccentKey = key;
+      document.documentElement.style.setProperty('--accent-rgb', key);
+    }
+
     // ---- Main loop ---------------------------------------------------
     _loop(t = 0) {
       const dt = Math.min((t - this._lastT) / 1000, 0.05) || 0;
@@ -708,11 +880,13 @@
 
       this._gridPhase += dt * 14;
       this.dom.gridBg.style.setProperty('--grid-y', `${(this._gridPhase % 40)}px`);
+      this._updateAccentColor();
 
       const ctx = this.ctx2d;
       ctx.clearRect(0, 0, this.width, this.height);
 
       if (this.state === 'playing') {
+        if (this._joystickEl) this._updateJoystickInput();
         if (this.config.onUpdate) this.config.onUpdate(dt, this);
         this.particles.update(dt);
         if (this.config.onRender) this.config.onRender(ctx, this);

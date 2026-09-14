@@ -17,13 +17,67 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* CRT viewport — locked to landscape, identical on mobile & desktop */
+/* Cabinet — header bar + CRT screen stacked, locked to landscape,   */
+/* identical footprint on mobile & desktop. The header is a separate */
+/* strip (not part of the CRT glass); the CRT screen keeps the same  */
+/* box it always had, just sharing the footprint with the header.    */
 /* ---------------------------------------------------------------- */
-.crt-screen {
+.cabinet {
   position: relative;
   width: min(100vw, 177.78vh);
   height: min(100vh, 56.25vw);
   max-width: 1280px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vh, 10px);
+}
+
+.header-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: clamp(7px, 1.4vh, 12px) clamp(12px, 2.4vw, 20px);
+  background: linear-gradient(180deg, var(--grey-90) 0%, var(--bg) 100%);
+  border: var(--line-width) solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 0 5px var(--accent), 0 0 18px rgba(var(--accent-rgb),.4), inset 0 0 14px rgba(var(--accent-rgb),.12);
+  transition: border-color .6s ease, box-shadow .6s ease;
+}
+.header-bar[hidden] { display: none; }
+
+.header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-atari);
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 4px var(--accent), 0 0 14px rgba(var(--accent-rgb),.6), 0 0 32px rgba(var(--accent-rgb),.32);
+  font-size: clamp(15px, 3.2vw, 25px);
+  letter-spacing: .03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .6s ease, text-shadow .6s ease;
+}
+
+.header-controls { flex: none; display: flex; gap: 8px; }
+
+.header-logo {
+  flex: none;
+  width: clamp(42px, 7.5vw, 68px);
+  color: var(--white);
+  filter: drop-shadow(0 0 4px rgba(255,255,255,.55)) drop-shadow(0 0 12px rgba(255,255,255,.28));
+}
+.header-logo svg { display: block; width: 100%; height: auto; }
+.header-logo .cls-1 { fill: currentColor; }
+
+.crt-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
   background: var(--bg);
   overflow: hidden;
   border-radius: var(--radius);
@@ -83,17 +137,10 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Persistent top-left HUD: mute always first, home/settings second  */
+/* Header controls: mute always first, home/help second — lives in   */
+/* .header-controls now (a normal flex child of .header-bar), not    */
+/* floated over the screen.                                          */
 /* ---------------------------------------------------------------- */
-.hud-topleft {
-  position: absolute;
-  top: var(--hud-inset);
-  left: var(--hud-inset);
-  z-index: 40; /* above .screen (30) — mute/help must stay live on every screen */
-  display: flex;
-  gap: 10px;
-}
-
 .icon-btn {
   width: var(--icon-btn);
   height: var(--icon-btn);
@@ -147,6 +194,22 @@
 .hud-lives .life-icon { width: 14px; height: 14px; }
 .hud-score { color: var(--ink); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
 .hud-score .label { color: var(--ink-dim); font-size: .8em; display: block; }
+/* Optional per-game readout (e.g. Asteroids' dust/buff meter) — stays
+   empty and invisible for games that never call shell.setDust(). */
+.hud-dust {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--yellow);
+  text-shadow: 0 0 6px rgba(252,206,1,.5);
+  white-space: nowrap;
+}
+.hud-dust:empty { display: none; }
+.hud-dust .buff {
+  display: block;
+  font-size: .82em;
+  color: var(--pink);
+  text-shadow: 0 0 8px rgba(255,0,141,.6);
+}
 
 /* ---------------------------------------------------------------- */
 /* Control zones — side depends on the player's handedness choice.   */
@@ -163,13 +226,65 @@
 }
 .controls-zone.side-left { left: var(--hud-inset); }
 .controls-zone.side-right { right: var(--hud-inset); }
-.controls-zone.accessory { opacity: .85; }
 
 /* Directional pairs: left/right sit side by side, up/down stack — the
    pair renders as one flex item so it stays a matched unit in the zone. */
 .btn-pair { display: flex; gap: 10px; flex: none; }
 .btn-pair.dir-row { flex-direction: row; }
 .btn-pair.dir-column { flex-direction: column; }
+
+/* Analog joystick — an alternate primary control (config.joystick),
+   replacing directional buttons for a game like Asteroids. Same
+   translucent-over-the-field treatment as .btn-control, same progressive
+   --accent glow as the rest of the chrome. */
+.joystick-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: none; }
+.joystick-base {
+  width: clamp(84px, 16vw, 116px);
+  height: clamp(84px, 16vw, 116px);
+  border-radius: 50%;
+  background: rgba(23,23,23,.55);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb),.4), inset 0 0 16px rgba(var(--accent-rgb),.18);
+  position: relative;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow .6s ease;
+}
+.joystick-ring {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 8px rgba(var(--accent-rgb),.55));
+  transition: filter .6s ease;
+}
+.joystick-knob {
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%,
+    color-mix(in srgb, var(--accent) 55%, white) 0%,
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 45%, black) 100%);
+  box-shadow: 0 0 8px var(--accent), 0 0 22px rgba(var(--accent-rgb),.6), 0 3px 8px rgba(0,0,0,.5);
+  pointer-events: none;
+  will-change: transform;
+  transition: background .6s ease, box-shadow .6s ease;
+}
+.joystick-label {
+  font-family: var(--font-body);
+  font-size: clamp(8px, 1.3vh, 11px);
+  letter-spacing: .05em;
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(var(--accent-rgb),.5);
+  white-space: nowrap;
+  transition: color .6s ease;
+}
 
 .btn-control {
   width: var(--safe-btn);

@@ -123,7 +123,9 @@
       ctx.fillStyle = cssColor('--accent-3');
       ctx.fillRect(this.cpu.x, this.cpu.y, PADDLE_W, PADDLE_H);
 
-      ctx.fillStyle = cssColor('--accent');
+      // fixed white, like Asteroids' ship — gameplay sprites stay put while
+      // only the cabinet chrome grows its color with the run
+      ctx.fillStyle = '#fff';
       ctx.fillRect(this.player.x, this.player.y, PADDLE_W, PADDLE_H);
 
       ctx.fillStyle = cssColor('--accent-2');
@@ -136,7 +138,6 @@
     gameId: 'pong',
     title: 'PONG',
     instructions: 'UP / DOWN MOVE YOUR PADDLE.<br>HOLD SMASH ON CONTACT FOR A FASTER,<br>SHARPER-ANGLED RETURN. 3 MISSES AND IT\'S OVER —<br>CHASE THE HIGH SCORE.',
-    accent: '--white',
     accent2: '--orange',
     accent3: '--atari-red',
     livesStart: 3,
