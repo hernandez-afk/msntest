@@ -184,8 +184,7 @@
   padding: 0;
 }
 .btn-control .btn-label {
-  font-family: var(--font-body);
-  font-weight: 600;
+  font-family: var(--font-vector);
   letter-spacing: .02em;
   line-height: 1.05;
   text-align: center;
@@ -233,19 +232,17 @@
 }
 
 .screen-sub {
-  font-family: var(--font-body);
-  font-size: clamp(11px, 1.9vw, 14px);
+  font-size: clamp(9px, 1.8vw, 13px);
   color: var(--ink-dim);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .blink { animation: blink 1.1s steps(2) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
 .btn-pixel {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: clamp(10px, 1.6vw, 13px);
+  font-family: var(--font-pixel);
+  font-size: clamp(9px, 1.6vw, 13px);
   padding: 12px 18px;
   background: transparent;
   border: var(--line-width) solid var(--ink);
@@ -263,8 +260,7 @@
 .side-toggle {
   display: flex;
   gap: 10px;
-  font-family: var(--font-body);
-  font-size: clamp(9px, 1.5vw, 12px);
+  font-size: clamp(8px, 1.5vw, 11px);
 }
 .side-toggle button[aria-pressed="true"] {
   background: var(--accent);
@@ -291,9 +287,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  font-family: var(--font-body);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(11px, 1.8vw, 14px);
+  font-size: clamp(9px, 1.8vw, 13px);
   width: min(90%, 360px);
   display: flex;
   flex-direction: column;
@@ -311,8 +306,19 @@
 }
 .leaderboard-list li .rank { width: 2ch; text-align: left; color: inherit; opacity: .6; }
 
+/* Wraps injected leaderboard/initials content so it inherits .screen's
+   centering — a plain block child would otherwise stretch to the widest
+   line and leave the buttons/rows hugging its left edge instead. */
+.screen-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2vh, 22px);
+}
+
 .initials-entry {
   display: flex;
+  justify-content: center;
   gap: 10px;
 }
 .initial-slot {
@@ -340,9 +346,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: clamp(12px, 3vw, 16px);
+  font-family: var(--font-pixel);
+  font-size: clamp(10px, 3vw, 14px);
   padding: 24px;
 }
 @media (max-aspect-ratio: 1/1) {

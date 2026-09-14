@@ -62,11 +62,12 @@
   --ink-dim: var(--grey-45);
 
   /* ---- Type ----
-     --font-body is the default for plain/legible text (instructions,
-     game-over copy, leaderboard rows, button labels) — Poppins, falling
-     back to the visitor's own system font stack. Each game may override
-     it via config.bodyFont; --font-pixel/--font-vector stay available as
-     deliberate retro accents for titles and HUD chrome. */
+     --font-pixel (Press Start 2P) is the default everywhere — HUD, body
+     copy, buttons, screens — the blocky arcade look. --font-vector
+     (Orbitron) is the deliberate accent for glowing titles/labels.
+     --font-body (Poppins, falling back to the visitor's system font) is
+     available opt-in per game via config.bodyFont, for a game that wants
+     a plainer, more legible voice instead of the pixel default. */
   --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-pixel: 'Press Start 2P', 'Courier New', monospace;   /* blocky – Pong/Breakout */
   --font-vector: 'Orbitron', 'Courier New', monospace;        /* vector-line feel – Asteroids/Tempest */
@@ -89,7 +90,7 @@ html, body {
   padding: 0;
   background: var(--bg-deep);
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--font-pixel);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
   user-select: none;

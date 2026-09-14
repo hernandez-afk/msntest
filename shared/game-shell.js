@@ -235,13 +235,14 @@
     <path d="M50 14 C30 26, 18 36, 15 52 C25 47, 37 44, 50 44 C63 44, 75 47, 85 52 C82 36, 70 26, 50 14Z" fill="none" stroke="currentColor" stroke-width="3"/>
   </svg>`;
 
-  // One icon set, one visual language (stroke = currentColor, same viewBox)
-  // so the top-left HUD reads as matching buttons, never mismatched emoji.
+  // One icon set, one visual language (stroke = currentColor, same 24x24
+  // box, optically balanced within it) so the top-left HUD reads as
+  // matching buttons, never mismatched emoji.
   const ICONS = {
-    unmuted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16.2 8.8a5 5 0 0 1 0 6.4"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>`,
-    muted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M15.5 9.5l5 5"/><path d="M20.5 9.5l-5 5"/></svg>`,
-    home: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-5h6v5h3a1 1 0 0 0 1-1v-9"/></svg>`,
-    help: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.6a2.7 2.7 0 1 1 4.2 2.2c-.9.6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17.2" r="0.75" fill="currentColor" stroke="none"/></svg>`,
+    unmuted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>`,
+    muted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M16 9l6 6"/><path d="M22 9l-6 6"/></svg>`,
+    home: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>`,
+    help: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.6a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1.9-1.1 1.8"/><line x1="12" y1="17" x2="12" y2="17.1"/></svg>`,
   };
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -634,10 +635,10 @@
 
     _renderInitialsEntry(container) {
       let idx = [0, 0, 0];
-      const wrap = el('div', '', '');
+      const wrap = el('div', 'screen-flow', '');
       wrap.innerHTML = `
         <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)">NEW HIGH SCORE</h2>
-        <p class="screen-sub pixel-text">SCORE ${this.score} — ENTER INITIALS</p>
+        <p class="screen-sub">SCORE ${this.score} — ENTER INITIALS</p>
         <div class="initials-entry" id="initials-entry"></div>
         <button class="btn-pixel primary" id="initials-confirm">CONFIRM</button>
       `;
@@ -674,7 +675,7 @@
 
     _renderLeaderboardList(container, highlightInitials) {
       const list = this.leaderboard.all();
-      const wrap = el('div', '', '');
+      const wrap = el('div', 'screen-flow', '');
       wrap.innerHTML = `
         <h2 class="screen-title vector-text" style="font-size:clamp(16px,4vw,26px)">HIGH SCORES</h2>
         <ol class="leaderboard-list" id="lb-list"></ol>
