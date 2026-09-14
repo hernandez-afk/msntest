@@ -29,6 +29,10 @@
     colorProgression: {              // optional overrides for the accent-growth curve
       satRampScore: 2500, huePerLevel: 47, hueDriftScore: 3500,
     },
+    titleFont: '--font-namco',      // optional: title/GAME OVER/high-score face — one of
+                                     // --font-body / --font-atari / --font-namco, or omit for
+                                     // the default real vector stroke glyphs
+    bodyFont: "'Poppins', sans-serif", // optional: swap the plain/legible body typeface
     onInit(shell) {},               // called once, wire up your game object
     onStart(shell) {},              // called every time a run begins
     onUpdate(dt, shell) {},         // called each frame while playing — when using a joystick, read
@@ -383,6 +387,10 @@
       // plain/legible text defaults to Poppins (theme.css); a game may swap
       // its whole body typeface for something more fitting its own system
       if (config.bodyFont) document.documentElement.style.setProperty('--font-body', config.bodyFont);
+      // Title header / GAME OVER / high-score face — defaults to the real
+      // vector stroke glyphs (see setTitleFont) unless a game opts into
+      // one of the plain web fonts instead.
+      if (config.titleFont) this.setTitleFont(config.titleFont);
 
       this._buildDom();
       this._wireHud();

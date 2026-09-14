@@ -146,6 +146,7 @@
     instructions: 'STICK MOVES YOUR PADDLE UP/DOWN.<br>HOLD SMASH ON CONTACT FOR A FASTER,<br>SHARPER-ANGLED RETURN. 3 MISSES AND IT\'S OVER —<br>CHASE THE HIGH SCORE.',
     accent2: '--orange',
     accent3: '--atari-red',
+    titleFont: '--font-namco',
     livesStart: 3,
     controlsDefaultSide: 'right',
     joystick: {
