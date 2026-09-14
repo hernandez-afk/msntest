@@ -289,6 +289,24 @@
   transition: color .6s ease;
 }
 
+/* "TOP" sits right in the ring's gap, like the dial marking on a real
+   joystick housing. */
+.joystick-top-label {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(5.5px, 1vh, 7px);
+  letter-spacing: .04em;
+  color: var(--accent);
+  text-shadow: 0 0 4px rgba(var(--accent-rgb),.5);
+  white-space: nowrap;
+  transition: color .6s ease;
+}
+
 .btn-control {
   width: var(--safe-btn);
   height: var(--safe-btn);

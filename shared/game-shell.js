@@ -624,6 +624,7 @@
       wrap.innerHTML = `
         <div class="joystick-base" id="joy-base">
           <svg class="joystick-ring" viewBox="0 0 100 100"></svg>
+          <div class="joystick-top-label">TOP</div>
           <div class="joystick-knob"></div>
         </div>
         <div class="joystick-label">${cfg.label || 'STICK'}</div>
