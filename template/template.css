@@ -98,10 +98,10 @@ body {
 .panel-input::placeholder { color: var(--grey-60); }
 .panel-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-.swatch-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .swatch-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid transparent;
   box-shadow: 0 0 0 1px rgba(255,255,255,.15);
@@ -124,7 +124,7 @@ body {
   font-weight: 600;
   font-size: 10px;
   letter-spacing: .03em;
-  padding: 7px 4px;
+  padding: 10px 4px;
   background: var(--grey-80);
   border: 1px solid var(--grey-70);
   border-radius: 4px;
@@ -140,8 +140,8 @@ body {
 
 .stepper { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
 .stepper-btn {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   flex: none;
   border-radius: 4px;
   background: var(--grey-80);
@@ -183,7 +183,11 @@ body {
   container-type: size;
 }
 @media (max-width: 760px) {
-  .preview-stage { min-height: 60vh; }
+  /* An explicit height, not min-height: container-type:size needs a
+     genuinely definite size to resolve cqw/cqh against — min-height
+     alone renders correctly but leaves the container-query height at 0,
+     collapsing the crt-screen inside to nothing. */
+  .preview-stage { height: 60vh; height: 60dvh; }
 }
 
 .preview-stage #app {

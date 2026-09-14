@@ -52,8 +52,7 @@
       const input = shell.input;
       const player = this.player, cpu = this.cpu, ball = this.ball;
 
-      if (input.isDown('up')) player.y -= PADDLE_SPEED * dt;
-      if (input.isDown('down')) player.y += PADDLE_SPEED * dt;
+      player.y += input.moveY * PADDLE_SPEED * dt;
       player.y = clamp(player.y, 0, shell.height - PADDLE_H);
 
       // simple CPU tracking with imperfect speed
@@ -137,14 +136,16 @@
   AtariShell.init({
     gameId: 'pong',
     title: 'PONG',
-    instructions: 'UP / DOWN MOVE YOUR PADDLE.<br>HOLD SMASH ON CONTACT FOR A FASTER,<br>SHARPER-ANGLED RETURN. 3 MISSES AND IT\'S OVER —<br>CHASE THE HIGH SCORE.',
+    instructions: 'STICK MOVES YOUR PADDLE UP/DOWN.<br>HOLD SMASH ON CONTACT FOR A FASTER,<br>SHARPER-ANGLED RETURN. 3 MISSES AND IT\'S OVER —<br>CHASE THE HIGH SCORE.',
     accent2: '--orange',
     accent3: '--atari-red',
     livesStart: 3,
     controlsDefaultSide: 'right',
+    joystick: {
+      label: 'STICK',
+      keys: { up: 'ArrowUp', down: 'ArrowDown' },
+    },
     buttons: [
-      { id: 'up', label: 'UP', key: 'ArrowUp', hold: true, pair: 'move', dir: 'up' },
-      { id: 'down', label: 'DOWN', key: 'ArrowDown', hold: true, pair: 'move', dir: 'down' },
       { id: 'smash', label: 'SMASH', key: 'Shift', hold: true, accessory: true },
     ],
     onInit: (shell) => game.init(shell),

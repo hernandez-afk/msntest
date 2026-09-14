@@ -19,7 +19,8 @@
     controlsDefaultSide: 'right',   // 'left' | 'right' — which side holds primary controls
     joystick: {                     // optional: analog stick instead of directional buttons
       label: 'STICK · ↑ THRUST',
-      keys: { left: 'ArrowLeft', right: 'ArrowRight', thrust: 'ArrowUp' },
+      keys: { left: 'ArrowLeft', right: 'ArrowRight', thrust: 'ArrowUp' }, // also: up/down, for a plain vertical axis
+      side: 'left',                 // optional: literal 'left'/'right', ignoring handedness
     },
     buttons: [                      // remaining action buttons (shoot/hyper etc.)
       { id: 'shoot',  label: 'SHOOT',  key: ' ',     hold: true,  accessory: true },
@@ -30,8 +31,9 @@
     },
     onInit(shell) {},               // called once, wire up your game object
     onStart(shell) {},              // called every time a run begins
-    onUpdate(dt, shell) {},         // called each frame while playing — read shell.input.turn/
-                                     // .thrust (-1..1 / 0..1) when using a joystick
+    onUpdate(dt, shell) {},         // called each frame while playing — when using a joystick, read
+                                     // shell.input.turn/.thrust (-1..1 / 0..1) and/or .moveY (-1..1,
+                                     // positive = down) depending which axes the game needs
     onRender(ctx, shell) {},        // called each frame while playing
   }
 */
@@ -288,6 +290,7 @@
       this.input = new InputManager();
       this.input.turn = 0;
       this.input.thrust = 0;
+      this.input.moveY = 0;
       this.leaderboard = new Leaderboard(this.gameId);
       this._raf = null;
       this._lastT = 0;
@@ -351,6 +354,7 @@
       if (this._joystickEl) { this._joystickEl.remove(); this._joystickEl = null; }
       this.input.turn = 0;
       this.input.thrust = 0;
+      this.input.moveY = 0;
       this.config.joystick = cfg || null;
       if (cfg) this._joystickEl = this._buildJoystick(cfg);
       this._layoutButtons();
@@ -687,7 +691,10 @@
 
       const JOY_MAX_PX = 30;
       let active = false, cx = 0, cy = 0;
-      this._joyDrag = { turn: 0, thrust: 0 };
+      // turn/thrust: Asteroids-style (horizontal -1..1, forward-only 0..1).
+      // moveY: a plain signed vertical axis (-1..1, positive = down) for a
+      // game that just wants up/down, like a paddle.
+      this._joyDrag = { turn: 0, thrust: 0, moveY: 0 };
       const apply = (clientX, clientY) => {
         let dx = clientX - cx, dy = clientY - cy;
         const m = Math.hypot(dx, dy);
@@ -695,12 +702,14 @@
         knob.style.transform = `translate(${dx}px, ${dy}px)`;
         this._joyDrag.turn = clamp(Math.abs(dx) / JOY_MAX_PX, 0, 1) * Math.sign(dx);
         this._joyDrag.thrust = dy < 0 ? clamp(-dy / JOY_MAX_PX, 0, 1) : 0;
+        this._joyDrag.moveY = clamp(dy / JOY_MAX_PX, -1, 1);
       };
       const reset = () => {
         active = false;
         knob.style.transform = 'translate(0px, 0px)';
         this._joyDrag.turn = 0;
         this._joyDrag.thrust = 0;
+        this._joyDrag.moveY = 0;
       };
       base.addEventListener('pointerdown', (e) => {
         base.setPointerCapture(e.pointerId);
@@ -719,6 +728,8 @@
         this.input.bindKey(cfg.keys.left, 'joyLeft');
         this.input.bindKey(cfg.keys.right, 'joyRight');
         this.input.bindKey(cfg.keys.thrust, 'joyThrust');
+        this.input.bindKey(cfg.keys.up, 'joyUp');
+        this.input.bindKey(cfg.keys.down, 'joyDown');
       }
       return wrap;
     }
@@ -763,13 +774,16 @@
     }
 
     // Combines keyboard (digital) and drag (analog) into one live turn/
-    // thrust pair each frame — called only while a joystick is configured.
+    // thrust/moveY set each frame — called only while a joystick is configured.
     _updateJoystickInput() {
       const kbTurn = (this.input.isDown('joyRight') ? 1 : 0) - (this.input.isDown('joyLeft') ? 1 : 0);
       const dragTurn = this._joyDrag.turn;
       this.input.turn = Math.abs(kbTurn) >= Math.abs(dragTurn) ? kbTurn : dragTurn;
       const kbThrust = this.input.isDown('joyThrust') ? 1 : 0;
       this.input.thrust = Math.max(kbThrust, this._joyDrag.thrust);
+      const kbMoveY = (this.input.isDown('joyDown') ? 1 : 0) - (this.input.isDown('joyUp') ? 1 : 0);
+      const dragMoveY = this._joyDrag.moveY;
+      this.input.moveY = Math.abs(kbMoveY) >= Math.abs(dragMoveY) ? kbMoveY : dragMoveY;
     }
 
     // ---- Lives / score -------------------------------------------------

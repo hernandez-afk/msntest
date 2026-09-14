@@ -65,6 +65,12 @@
     },
   });
 
+  // The shared shell's rotate-device gate is for the games, which lock to
+  // a landscape CRT box. This page's sidebar + preview stack fine in
+  // portrait too, so it doesn't need that gate blocking the whole page.
+  const rotatePrompt = document.querySelector('.rotate-prompt');
+  if (rotatePrompt) rotatePrompt.remove();
+
   // ---- screen tabs -----------------------------------------------------
   const tabs = Array.from(document.querySelectorAll('.tab-btn'));
   const screenActions = {
