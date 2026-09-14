@@ -299,7 +299,7 @@
   pointer-events: none;
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: clamp(5.5px, 1vh, 7px);
+  font-size: clamp(6.5px, 1.2vh, 8.5px);
   letter-spacing: .04em;
   color: var(--accent);
   text-shadow: 0 0 4px rgba(var(--accent-rgb),.5);
