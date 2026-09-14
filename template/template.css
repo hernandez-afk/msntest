@@ -118,7 +118,27 @@ body {
   font-size: 7px;
 }
 
-.stepper { display: flex; align-items: center; gap: 10px; }
+.mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.mode-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: .03em;
+  padding: 7px 4px;
+  background: var(--grey-80);
+  border: 1px solid var(--grey-70);
+  border-radius: 4px;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.mode-btn:hover { background: var(--grey-70); }
+.mode-btn.is-active { background: var(--accent); border-color: var(--accent); color: var(--black); }
+
+.stepper-row { display: flex; align-items: center; gap: 10px; }
+.stepper-row .panel-count { flex: none; width: 1.2em; }
+.stepper-row.is-disabled { opacity: .4; pointer-events: none; }
+
+.stepper { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; }
 .stepper-btn {
   width: 30px;
   height: 30px;

@@ -343,6 +343,19 @@
       this._wireButtons();
     }
 
+    // Swaps the joystick live — pass a config (optionally with `side:
+    // 'left'|'right'` for a literal fixed zone) or null to remove it and
+    // fall back to whatever buttons occupy that zone. For tooling that
+    // lets someone try a joystick instead of buttons on a given side.
+    setJoystick(cfg) {
+      if (this._joystickEl) { this._joystickEl.remove(); this._joystickEl = null; }
+      this.input.turn = 0;
+      this.input.thrust = 0;
+      this.config.joystick = cfg || null;
+      if (cfg) this._joystickEl = this._buildJoystick(cfg);
+      this._layoutButtons();
+    }
+
     // ---- DOM scaffolding -----------------------------------------
     _buildDom() {
       const root = document.getElementById('app') || document.body;
@@ -586,14 +599,24 @@
       this._layoutButtons();
     }
 
+    // Which physical zone a button belongs in: an explicit `side` ('left'/
+    // 'right') always wins — for tooling that wants a literal fixed side
+    // regardless of handedness. Without one, falls back to the normal
+    // accessory/primary-vs-handedness rule every game already uses.
+    _zoneForButton(b, primaryZone, accessoryZone) {
+      if (b.side === 'left') return this.dom.zoneLeft;
+      if (b.side === 'right') return this.dom.zoneRight;
+      return b.accessory ? accessoryZone : primaryZone;
+    }
+
     // Buttons that share a `pair` id render as one row (left/right) or
     // one column (up/down) so directional controls read as a matched unit.
-    _groupForZone(buttons, wantAccessory) {
+    _groupForZone(buttons, zoneEl, primaryZone, accessoryZone) {
       const items = [];
       const pairIndex = {};
       const DIR_ORDER = { left: 0, up: 0, right: 1, down: 1 };
       buttons
-        .filter((b) => Boolean(b.accessory) === wantAccessory)
+        .filter((b) => this._zoneForButton(b, primaryZone, accessoryZone) === zoneEl)
         .forEach((b) => {
           const btnEl = this._buttonEls[b.id].el;
           if (b.pair) {
@@ -623,10 +646,16 @@
       primaryZone.classList.remove('accessory');
       accessoryZone.classList.add('accessory');
 
-      if (this._joystickEl) primaryZone.appendChild(this._joystickEl);
+      if (this._joystickEl) {
+        const joyCfg = this.config.joystick || {};
+        const joyZone = joyCfg.side === 'left' ? this.dom.zoneLeft
+          : joyCfg.side === 'right' ? this.dom.zoneRight
+          : primaryZone;
+        joyZone.appendChild(this._joystickEl);
+      }
 
-      const render = (zoneEl, wantAccessory) => {
-        this._groupForZone(buttons, wantAccessory).forEach((item) => {
+      const render = (zoneEl) => {
+        this._groupForZone(buttons, zoneEl, primaryZone, accessoryZone).forEach((item) => {
           if (item instanceof HTMLElement) { zoneEl.appendChild(item); return; }
           const isRow = item.entries.some((e) => e.dir === 'left' || e.dir === 'right');
           const wrap = el('div', 'btn-pair ' + (isRow ? 'dir-row' : 'dir-column'));
@@ -634,8 +663,8 @@
           zoneEl.appendChild(wrap);
         });
       };
-      render(primaryZone, false);
-      render(accessoryZone, true);
+      render(this.dom.zoneLeft);
+      render(this.dom.zoneRight);
     }
 
     // ---- Joystick (optional, replaces directional buttons) -----------

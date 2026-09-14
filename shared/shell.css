@@ -230,6 +230,18 @@
 .controls-zone.side-left { left: var(--hud-inset); }
 .controls-zone.side-right { right: var(--hud-inset); }
 
+/* Opt-in: once a zone holds more than a couple of individual buttons, let
+   it wrap into a proper 2-column cluster (new rows stack upward, since
+   the zone is bottom-anchored) instead of a single row running off the
+   edge. Existing games keep the plain single-row behavior above unless
+   they explicitly add this class — it's for a zone the game expects to
+   hold a variable number of buttons (e.g. a template/customizer tool). */
+.controls-zone.multi-row {
+  flex-wrap: wrap-reverse;
+  align-content: flex-end;
+  max-width: calc(var(--safe-btn) * 2 + 12px);
+}
+
 /* Directional pairs: left/right sit side by side, up/down stack — the
    pair renders as one flex item so it stays a matched unit in the zone. */
 .btn-pair { display: flex; gap: 10px; flex: none; }

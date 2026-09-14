@@ -21,14 +21,26 @@
     { name: 'Blue', hex: '#0065B9', rgb: '0, 101, 185' },
   ];
 
-  function buildButtons(leftCount, rightCount) {
+  const JOYSTICK_CFG = { label: 'STICK · ↑ THRUST', keys: { left: 'ArrowLeft', right: 'ArrowRight', thrust: 'ArrowUp' } };
+
+  // Literal left/right — not tied to the primary/accessory handedness
+  // concept every game uses, so the panel's LEFT/RIGHT controls always
+  // land on the side they say, regardless of the home screen's own toggle.
+  const sideState = {
+    left: { mode: 'buttons', count: 0 },
+    right: { mode: 'buttons', count: 0 },
+  };
+
+  function buildButtons() {
     const buttons = [];
-    for (let i = 0; i < leftCount; i++) buttons.push({ id: `l${i}`, label: '' });
-    for (let i = 0; i < rightCount; i++) buttons.push({ id: `r${i}`, label: '', accessory: true });
+    if (sideState.left.mode === 'buttons') {
+      for (let i = 0; i < sideState.left.count; i++) buttons.push({ id: `l${i}`, label: '', side: 'left' });
+    }
+    if (sideState.right.mode === 'buttons') {
+      for (let i = 0; i < sideState.right.count; i++) buttons.push({ id: `r${i}`, label: '', side: 'right' });
+    }
     return buttons;
   }
-
-  const counts = { left: 0, right: 0 };
 
   const shell = AtariShell.init({
     gameId: 'template',
@@ -37,7 +49,7 @@
     livesStart: 3,
     controlsDefaultSide: 'left',
     skipBoot: true,
-    buttons: buildButtons(counts.left, counts.right),
+    buttons: buildButtons(),
     onRender(ctx, s) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255,255,255,.12)';
@@ -104,41 +116,74 @@
     swatchButtons.forEach((b) => b.classList.toggle('is-active', b === autoBtn));
   });
 
-  // ---- button counts ---------------------------------------------------
+  // ---- left/right: buttons vs. joystick, and button count --------------
   function renderDots(side) {
     const wrap = document.getElementById(`${side}-dots`);
     wrap.innerHTML = '';
     for (let i = 0; i < MAX_BUTTONS_PER_SIDE; i++) {
       const dot = document.createElement('span');
-      dot.className = i < counts[side] ? 'is-filled' : '';
+      dot.className = i < sideState[side].count ? 'is-filled' : '';
       wrap.appendChild(dot);
     }
-  }
-  function applyButtons() {
-    shell.setButtons(buildButtons(counts.left, counts.right));
   }
   function syncStepperDisabled() {
     document.querySelectorAll('.stepper').forEach((el) => {
       const side = el.dataset.side;
-      el.querySelector('[data-dir="down"]').disabled = counts[side] <= 0;
-      el.querySelector('[data-dir="up"]').disabled = counts[side] >= MAX_BUTTONS_PER_SIDE;
+      el.querySelector('[data-dir="down"]').disabled = sideState[side].count <= 0;
+      el.querySelector('[data-dir="up"]').disabled = sideState[side].count >= MAX_BUTTONS_PER_SIDE;
     });
   }
+  function syncModeUI(side) {
+    document.querySelector(`.mode-toggle[data-side="${side}"]`).querySelectorAll('.mode-btn').forEach((b) => {
+      b.classList.toggle('is-active', b.dataset.mode === sideState[side].mode);
+    });
+    document.querySelector(`.side-group[data-side="${side}"] .stepper-row`)
+      .classList.toggle('is-disabled', sideState[side].mode !== 'buttons');
+  }
+  // Applies the current sideState to the live shell: one joystick (on
+  // whichever side is in 'joystick' mode, if any) plus buttons on every
+  // side left in 'buttons' mode — 3 or fewer buttons stay a single row,
+  // 4 wrap into a 2x2 cluster via the shared .multi-row zone class.
+  function applyControls() {
+    const joySide = sideState.left.mode === 'joystick' ? 'left' : sideState.right.mode === 'joystick' ? 'right' : null;
+    shell.setJoystick(joySide ? Object.assign({ side: joySide }, JOYSTICK_CFG) : null);
+    shell.setButtons(buildButtons());
+    shell.dom.zoneLeft.classList.toggle('multi-row', sideState.left.mode === 'buttons' && sideState.left.count > 2);
+    shell.dom.zoneRight.classList.toggle('multi-row', sideState.right.mode === 'buttons' && sideState.right.count > 2);
+  }
+
+  document.querySelectorAll('.mode-toggle').forEach((toggle) => {
+    const side = toggle.dataset.side;
+    toggle.querySelectorAll('.mode-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (mode === sideState[side].mode) return;
+        if (mode === 'joystick') {
+          const other = side === 'left' ? 'right' : 'left';
+          if (sideState[other].mode === 'joystick') { sideState[other].mode = 'buttons'; syncModeUI(other); }
+        }
+        sideState[side].mode = mode;
+        syncModeUI(side);
+        applyControls();
+      });
+    });
+  });
+
   document.querySelectorAll('.stepper').forEach((el) => {
     const side = el.dataset.side;
     el.querySelector('[data-dir="down"]').addEventListener('click', () => {
-      counts[side] = Math.max(0, counts[side] - 1);
-      document.getElementById(`${side}-count`).textContent = counts[side];
+      sideState[side].count = Math.max(0, sideState[side].count - 1);
+      document.getElementById(`${side}-count`).textContent = sideState[side].count;
       renderDots(side);
       syncStepperDisabled();
-      applyButtons();
+      applyControls();
     });
     el.querySelector('[data-dir="up"]').addEventListener('click', () => {
-      counts[side] = Math.min(MAX_BUTTONS_PER_SIDE, counts[side] + 1);
-      document.getElementById(`${side}-count`).textContent = counts[side];
+      sideState[side].count = Math.min(MAX_BUTTONS_PER_SIDE, sideState[side].count + 1);
+      document.getElementById(`${side}-count`).textContent = sideState[side].count;
       renderDots(side);
       syncStepperDisabled();
-      applyButtons();
+      applyControls();
     });
   });
   renderDots('left');

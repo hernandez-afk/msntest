@@ -36,25 +36,39 @@
         <div class="swatch-row" id="color-swatches"></div>
       </section>
 
-      <section class="panel-group">
-        <h2 class="panel-label">Buttons — left side <span class="panel-count" id="left-count">0</span></h2>
-        <div class="stepper" data-side="left">
-          <button class="stepper-btn" data-dir="down" aria-label="Fewer left buttons">–</button>
-          <div class="stepper-dots" id="left-dots"></div>
-          <button class="stepper-btn" data-dir="up" aria-label="More left buttons">+</button>
+      <section class="panel-group side-group" data-side="left">
+        <h2 class="panel-label">Left side</h2>
+        <div class="mode-toggle" data-side="left">
+          <button class="mode-btn is-active" data-mode="buttons">BUTTONS</button>
+          <button class="mode-btn" data-mode="joystick">JOYSTICK</button>
+        </div>
+        <div class="stepper-row">
+          <span class="panel-count" id="left-count">0</span>
+          <div class="stepper" data-side="left">
+            <button class="stepper-btn" data-dir="down" aria-label="Fewer left buttons">–</button>
+            <div class="stepper-dots" id="left-dots"></div>
+            <button class="stepper-btn" data-dir="up" aria-label="More left buttons">+</button>
+          </div>
         </div>
       </section>
 
-      <section class="panel-group">
-        <h2 class="panel-label">Buttons — right side <span class="panel-count" id="right-count">0</span></h2>
-        <div class="stepper" data-side="right">
-          <button class="stepper-btn" data-dir="down" aria-label="Fewer right buttons">–</button>
-          <div class="stepper-dots" id="right-dots"></div>
-          <button class="stepper-btn" data-dir="up" aria-label="More right buttons">+</button>
+      <section class="panel-group side-group" data-side="right">
+        <h2 class="panel-label">Right side</h2>
+        <div class="mode-toggle" data-side="right">
+          <button class="mode-btn is-active" data-mode="buttons">BUTTONS</button>
+          <button class="mode-btn" data-mode="joystick">JOYSTICK</button>
+        </div>
+        <div class="stepper-row">
+          <span class="panel-count" id="right-count">0</span>
+          <div class="stepper" data-side="right">
+            <button class="stepper-btn" data-dir="down" aria-label="Fewer right buttons">–</button>
+            <div class="stepper-dots" id="right-dots"></div>
+            <button class="stepper-btn" data-dir="up" aria-label="More right buttons">+</button>
+          </div>
         </div>
       </section>
 
-      <p class="panel-note">The home screen's own LEFT/RIGHT toggle (part of the outline below) decides which physical side is "primary" — try it, then compare against these counts.</p>
+      <p class="panel-note">Only one side can hold the joystick at a time. Buttons up to 3 sit in a row; 4 wrap into a 2×2 cluster. The home screen's own LEFT/RIGHT toggle (part of the outline below) decides which physical side is "primary" for other games — this tool places things by literal side instead.</p>
     </aside>
 
     <div class="preview-stage">
