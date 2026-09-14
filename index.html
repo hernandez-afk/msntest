@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Atari — Game Hub</title>
+  <link rel="stylesheet" href="shared/theme.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: var(--bg-deep);
+    }
+    .hub-fuji { width: 90px; color: var(--atari-red); }
+    .hub-title { font-family: var(--font-vector); color: var(--atari-red); letter-spacing: .14em; font-size: clamp(28px, 7vw, 48px); text-shadow: 0 0 14px var(--atari-red); }
+    .hub-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 0 20px; }
+    .game-card {
+      width: 220px;
+      border: 2px solid var(--grey-70);
+      border-radius: 6px;
+      padding: 18px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--ink);
+      background: var(--grey-90);
+      transition: border-color .15s;
+    }
+    .game-card:hover { border-color: var(--accent, var(--yellow)); }
+    .game-card h2 { font-family: var(--font-vector); font-size: 18px; letter-spacing: .06em; margin: 10px 0 6px; }
+    .game-card p { font-size: 10px; color: var(--ink-dim); line-height: 1.6; }
+    .swatches { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+    .swatches span { width: 12px; height: 12px; display: inline-block; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <svg class="hub-fuji" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 2 C20 20, 5 35, 2 58 C15 50, 30 44, 50 44 C70 44, 85 50, 98 58 C95 35, 80 20, 50 2Z" fill="none" stroke="currentColor" stroke-width="3"/>
+    <path d="M50 14 C30 26, 18 36, 15 52 C25 47, 37 44, 50 44 C63 44, 75 47, 85 52 C82 36, 70 26, 50 14Z" fill="none" stroke="currentColor" stroke-width="3"/>
+  </svg>
+  <div class="hub-title pixel-text">ATARI ARCADE</div>
+  <div class="hub-grid">
+    <a class="game-card" href="games/asteroids/">
+      <h2 class="vector-text">ASTEROIDS</h2>
+      <p>Vector-line vintage. Drag to aim, thrust, shoot, hyperspace.</p>
+      <div class="swatches">
+        <span style="background:#FFFFFF"></span><span style="background:#FCCE01"></span><span style="background:#E01E2B"></span>
+      </div>
+    </a>
+    <a class="game-card" href="games/pong/">
+      <h2 class="vector-text">PONG</h2>
+      <p>Blocky-pixel vintage. Perpetual play — 3 lives, chase the high score.</p>
+      <div class="swatches">
+        <span style="background:#FFFFFF"></span><span style="background:#FF6B00"></span><span style="background:#E01E2B"></span>
+      </div>
+    </a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,106 @@
+/*
+  Atari Shared Design System — theme.css
+  =======================================
+  Brand tokens shared by every game shell. A single game should only ever
+  need to override --accent / --accent-2 / --accent-3 (its "sprite" colors)
+  and, rarely, --bg-tint. Everything else (type, CRT, grid, spacing) stays
+  constant so the games read as siblings.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500;700;900&display=swap');
+
+:root {
+  /* ---- Atari brand core ---- */
+  --atari-red: #E01E2B;
+  --black: #171717;
+  --white: #FFFFFF;
+
+  /* ---- Atari primary accents ---- */
+  --yellow: #FCCE01;
+  --orange: #FF6B00;
+  --bright-red: #FF0000;
+  --pink: #FF008D;
+  --purple: #A4009F;
+  --blue: #0065B9;
+
+  /* ---- The 8 recognizable "sprite" colors ----
+     One shared, finite palette for every game's foreground elements
+     (ships, balls, paddles, bricks, vector lines). Not every game uses
+     all 8, but a game should never introduce a 9th. */
+  --sprite-1: var(--white);
+  --sprite-2: var(--atari-red);
+  --sprite-3: var(--yellow);
+  --sprite-4: var(--orange);
+  --sprite-5: var(--bright-red);
+  --sprite-6: var(--pink);
+  --sprite-7: var(--purple);
+  --sprite-8: var(--blue);
+
+  /* ---- Greys (low-saturation, background/UI layer) ---- */
+  --grey-100: #171717;
+  --grey-90:  #2D2D2D;
+  --grey-80:  #464646;
+  --grey-70:  #616161;
+  --grey-60:  #7A7A7A;
+  --grey-45:  #979797;
+  --grey-45b: #AEAEAE;
+  --grey-25:  #C5C5C5;
+  --grey-15:  #E0E0E0;
+  --grey-5:   #F5F5F5;
+
+  /* ---- Per-game accent (override in each game's stylesheet) ---- */
+  --accent: var(--sprite-3);      /* primary sprite / vector color */
+  --accent-2: var(--sprite-8);    /* secondary sprite color */
+  --accent-3: var(--sprite-2);    /* danger / highlight */
+  --bg-tint: 210;                 /* hue-ish knob for background grid tint, degrees */
+
+  /* ---- Surfaces ---- */
+  --bg: var(--black);
+  --bg-deep: #0c0c0c;
+  --panel: var(--grey-90);
+  --ink: var(--grey-5);
+  --ink-dim: var(--grey-45);
+
+  /* ---- Type ---- */
+  --font-pixel: 'Press Start 2P', 'Courier New', monospace;   /* blocky – Pong/Breakout */
+  --font-vector: 'Orbitron', 'Courier New', monospace;        /* vector-line feel – Asteroids/Tempest */
+
+  /* ---- Vector line rules: one consistent thickness + faint glow ---- */
+  --line-width: 2px;
+  --line-glow: 0 0 4px currentColor, 0 0 10px currentColor;
+
+  /* ---- Layout ---- */
+  --hud-inset: clamp(10px, 2.5vw, 22px);
+  --radius: 4px;
+  --safe-btn: clamp(56px, 11vw, 84px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-deep);
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+.vector-text {
+  font-family: var(--font-vector);
+  letter-spacing: 0.06em;
+  text-shadow: var(--line-glow);
+}
+
+.pixel-text {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.02em;
+}

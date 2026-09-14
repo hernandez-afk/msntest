@@ -1,0 +1,320 @@
+/*
+  Atari Shared Design System — shell.css
+  =======================================
+  Structural layout every game shares: the CRT viewport, the parallax
+  Vectrex grid, the persistent HUD corners, and the four flow screens
+  (home / gameplay HUD / game-over / leaderboard). A game only ever
+  fills in #game-canvas and the control-button labels/positions —
+  it never rebuilds this chrome.
+*/
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg-deep);
+}
+
+/* ---------------------------------------------------------------- */
+/* CRT viewport — locked to landscape, identical on mobile & desktop */
+/* ---------------------------------------------------------------- */
+.crt-screen {
+  position: relative;
+  width: min(100vw, 177.78vh);
+  height: min(100vh, 56.25vw);
+  max-width: 1280px;
+  background: var(--bg);
+  overflow: hidden;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 1px var(--grey-90), 0 20px 60px rgba(0,0,0,.6);
+}
+
+/* Vectrex-style vignetted parallax grid, sits behind everything */
+.grid-bg {
+  position: absolute;
+  inset: -20%;
+  background-image:
+    linear-gradient(hsla(var(--bg-tint), 60%, 55%, .16) 1px, transparent 1px),
+    linear-gradient(90deg, hsla(var(--bg-tint), 60%, 55%, .16) 1px, transparent 1px);
+  background-size: 40px 40px;
+  transform: perspective(600px) rotateX(35deg) translate3d(var(--grid-x, 0px), var(--grid-y, 0px), 0);
+  transform-origin: center 30%;
+  pointer-events: none;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.75) 100%);
+  z-index: 5;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,.18) 0px,
+    rgba(0,0,0,.18) 1px,
+    transparent 2px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  animation: flicker 6s infinite steps(60);
+}
+
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 1; }
+  97% { opacity: .88; }
+  98% { opacity: 1; }
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---------------------------------------------------------------- */
+/* Persistent top-left HUD: mute always first, home/settings second  */
+/* ---------------------------------------------------------------- */
+.hud-topleft {
+  position: absolute;
+  top: var(--hud-inset);
+  left: var(--hud-inset);
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: clamp(34px, 6vw, 46px);
+  height: clamp(34px, 6vw, 46px);
+  border-radius: 50%;
+  border: var(--line-width) solid var(--ink);
+  background: rgba(23,23,23,.55);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: 1.1em;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.icon-btn:active { transform: scale(.92); }
+.icon-btn[data-muted="true"] .icon-unmuted,
+.icon-btn[data-muted="false"] .icon-muted { display: none; }
+
+/* ---------------------------------------------------------------- */
+/* Center HUD during gameplay: lives (left of center) + score        */
+/* ---------------------------------------------------------------- */
+.hud-center {
+  position: absolute;
+  top: var(--hud-inset);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 3vw, 28px);
+  font-size: clamp(11px, 2vw, 16px);
+  text-align: center;
+}
+.hud-lives { display: flex; gap: 6px; align-items: center; color: var(--accent); }
+.hud-lives .life-icon { width: 14px; height: 14px; }
+.hud-score { color: var(--ink); letter-spacing: .08em; }
+.hud-score .label { color: var(--ink-dim); font-size: .8em; display: block; }
+
+/* ---------------------------------------------------------------- */
+/* Control zones — side depends on the player's handedness choice.   */
+/* One zone gets the game buttons, the opposite zone gets accessory  */
+/* (pause/etc.) buttons, mirroring a real cabinet's split layout.    */
+/* ---------------------------------------------------------------- */
+.controls-zone {
+  position: absolute;
+  bottom: var(--hud-inset);
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.controls-zone.side-left { left: var(--hud-inset); }
+.controls-zone.side-right { right: var(--hud-inset); }
+.controls-zone.accessory { opacity: .85; }
+
+.btn-control {
+  width: var(--safe-btn);
+  height: var(--safe-btn);
+  border-radius: 50%;
+  border: var(--line-width) solid var(--accent);
+  background: rgba(23,23,23,.55);
+  color: var(--accent);
+  font-family: var(--font-vector);
+  font-size: clamp(9px, 1.6vw, 12px);
+  letter-spacing: .04em;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 4px;
+  text-shadow: var(--line-glow);
+  box-shadow: inset 0 0 12px rgba(0,0,0,.4);
+  touch-action: none;
+}
+.btn-control.is-active,
+.btn-control:active {
+  background: var(--accent);
+  color: var(--black);
+  text-shadow: none;
+}
+.btn-control.accent-2 { border-color: var(--accent-2); color: var(--accent-2); }
+.btn-control.accent-2.is-active { background: var(--accent-2); color: var(--black); }
+
+/* ---------------------------------------------------------------- */
+/* Full-bleed overlay screens: boot / home / game-over / leaderboard */
+/* ---------------------------------------------------------------- */
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vh, 22px);
+  background: rgba(12,12,12,.94);
+  text-align: center;
+  padding: var(--hud-inset);
+  transition: opacity .35s ease;
+}
+.screen[hidden] { display: none; }
+.screen.is-fading { opacity: 0; }
+
+.screen-title {
+  font-family: var(--font-vector);
+  color: var(--accent);
+  text-shadow: var(--line-glow);
+  font-size: clamp(20px, 5vw, 44px);
+  letter-spacing: .08em;
+  margin: 0;
+}
+
+.screen-sub {
+  font-size: clamp(9px, 1.8vw, 13px);
+  color: var(--ink-dim);
+}
+
+.blink { animation: blink 1.1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.btn-pixel {
+  font-family: var(--font-pixel);
+  font-size: clamp(9px, 1.6vw, 13px);
+  padding: 12px 18px;
+  background: transparent;
+  border: var(--line-width) solid var(--ink);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.btn-pixel.primary {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-shadow: var(--line-glow);
+}
+.btn-pixel:active { transform: scale(.96); }
+
+.side-toggle {
+  display: flex;
+  gap: 10px;
+  font-size: clamp(8px, 1.5vw, 11px);
+}
+.side-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--black);
+}
+
+/* Boot logo */
+.boot-logo {
+  font-family: var(--font-vector);
+  font-size: clamp(28px, 8vw, 64px);
+  color: var(--atari-red);
+  letter-spacing: .12em;
+  text-shadow: 0 0 12px var(--atari-red), 0 0 30px rgba(224,30,43,.6);
+}
+.boot-fuji {
+  width: clamp(60px, 14vw, 110px);
+  height: auto;
+  display: block;
+  margin: 0 auto 6px;
+}
+
+/* Leaderboard */
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: clamp(9px, 1.8vw, 13px);
+  width: min(90%, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.leaderboard-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 10px;
+  color: var(--ink-dim);
+}
+.leaderboard-list li.is-you {
+  color: var(--accent);
+  text-shadow: var(--line-glow);
+}
+.leaderboard-list li .rank { width: 2ch; text-align: left; color: inherit; opacity: .6; }
+
+.initials-entry {
+  display: flex;
+  gap: 10px;
+}
+.initial-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.initial-char {
+  font-family: var(--font-vector);
+  font-size: clamp(20px, 5vw, 34px);
+  color: var(--accent);
+  text-shadow: var(--line-glow);
+  width: 1.2em;
+}
+
+/* Rotate-device prompt (mobile portrait) */
+.rotate-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg-deep);
+  color: var(--ink);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: clamp(10px, 3vw, 14px);
+  padding: 24px;
+}
+@media (max-aspect-ratio: 1/1) {
+  .rotate-prompt.is-armed { display: flex; }
+}
+
+@media (max-width: 480px) {
+  :root { --hud-inset: 8px; }
+}
