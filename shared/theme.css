@@ -22,6 +22,14 @@
   font-weight: 400; font-style: normal; font-display: swap;
 }
 
+/* Retro arcade marquee face — an alternate title/header option alongside
+   the vector and Atari1972 looks. */
+@font-face {
+  font-family: 'Namco';
+  src: url('fonts/Namco.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
 :root {
   /* ---- Atari brand core ---- */
   --atari-red: #E01E2B;
@@ -93,6 +101,18 @@
   --font-pixel: 'Press Start 2P', 'Courier New', monospace;   /* blocky – Pong/Breakout */
   --font-vector: 'Orbitron', 'Courier New', monospace;        /* vector-line feel – Asteroids/Tempest */
   --font-atari: 'Atari1972', var(--font-vector);              /* header/marquee title only */
+  --font-namco: 'Namco', var(--font-vector);                  /* retro arcade marquee alternate */
+
+  /* Which face the title header / GAME OVER / high-score headings use
+     (.screen-title). Defaults to the vector face; a game or tool can
+     repoint it at --font-body / --font-atari / --font-namco instead
+     via Shell.setTitleFont(). --font-title-transform exists because
+     Namco is a single-case display face — its real letterforms sit on
+     the lowercase codepoints, so Shell.setTitleFont lowercases the text
+     for it rather than rendering uppercase input against placeholder
+     glyphs. */
+  --font-title: var(--font-vector);
+  --font-title-transform: none;
 
   /* ---- Vector line rules: one consistent thickness + faint glow ---- */
   --line-width: 2px;

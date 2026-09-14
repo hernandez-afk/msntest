@@ -104,7 +104,7 @@
   if (rotatePrompt) rotatePrompt.remove();
 
   // ---- screen tabs -----------------------------------------------------
-  const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+  const tabs = Array.from(document.querySelectorAll('#screen-tabs .tab-btn'));
   const screenActions = {
     home: () => shell.goHome(),
     playing: () => shell.startRun(),
@@ -127,6 +127,15 @@
   const titleInput = document.getElementById('title-input');
   titleInput.addEventListener('input', () => {
     shell.setTitle(titleInput.value.trim() || ' ');
+  });
+
+  // ---- font — title header / game over / high score --------------------
+  const fontButtons = Array.from(document.querySelectorAll('#font-tabs .tab-btn'));
+  fontButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      shell.setTitleFont(btn.dataset.font);
+      fontButtons.forEach((b) => b.classList.toggle('is-active', b === btn));
+    });
   });
 
   // ---- color scheme — primary (8-sprite) + spectrum (full brand deck) --

@@ -242,8 +242,9 @@
           this.thrustPulse = 0.08;
         }
       }
-      ship.vx *= SHIP_DRAG;
-      ship.vy *= SHIP_DRAG;
+      const dragFactor = Math.pow(SHIP_DRAG, dt * 60);
+      ship.vx *= dragFactor;
+      ship.vy *= dragFactor;
       ship.x = wrap(ship.x + ship.vx * dt, shell.width);
       ship.y = wrap(ship.y + ship.vy * dt, shell.height);
 

@@ -374,7 +374,8 @@
 .screen.is-fading { opacity: 0; }
 
 .screen-title {
-  font-family: var(--font-vector);
+  font-family: var(--font-title, var(--font-vector));
+  text-transform: var(--font-title-transform, none);
   color: var(--accent);
   text-shadow: var(--line-glow);
   font-size: clamp(20px, 5vw, 44px);

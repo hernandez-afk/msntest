@@ -284,7 +284,15 @@
       this.score = 0;
       this.level = 1;
       this.lives = config.livesStart ?? 3;
-      this.side = localStorage.getItem(`atari:side:${this.gameId}`) || config.controlsDefaultSide || 'right';
+      // Namespaced by whether this game has a joystick: a handedness value
+      // cached from before a game grew a joystick (button-only layout) must
+      // not leak into the joystick layout — it can park the stick on the
+      // wrong side, making it look unresponsive. Adding a joystick to a
+      // game intentionally starts its handedness fresh from
+      // controlsDefaultSide; toggling afterward is remembered under this
+      // namespaced key same as before.
+      this._sideKey = `atari:side:${this.gameId}${config.joystick ? ':joy' : ''}`;
+      this.side = localStorage.getItem(this._sideKey) || config.controlsDefaultSide || 'right';
       this.audio = new AudioEngine(this.gameId);
       this.particles = new ParticleSystem();
       this.input = new InputManager();
@@ -328,6 +336,16 @@
       if (h) h.textContent = title;
       const p = document.getElementById('pause-title');
       if (p) p.textContent = title;
+    }
+
+    // Repoints the title header / "GAME OVER" / high-score headings
+    // (.screen-title) at a different face — pass one of the --font-*
+    // tokens (e.g. '--font-atari') or null to fall back to the default
+    // vector font. For tooling that lets someone try different type.
+    setTitleFont(fontToken) {
+      document.documentElement.style.setProperty('--font-title', fontToken ? `var(${fontToken})` : '');
+      // Namco is a single-case display face — see theme.css for why.
+      document.documentElement.style.setProperty('--font-title-transform', fontToken === '--font-namco' ? 'lowercase' : '');
     }
 
     // Freezes --accent at a fixed "r, g, b" string instead of letting it
@@ -556,7 +574,7 @@
 
     _setSide(side) {
       this.side = side;
-      localStorage.setItem(`atari:side:${this.gameId}`, side);
+      localStorage.setItem(this._sideKey, side);
       this._reflectSide();
       this._layoutButtons();
     }
