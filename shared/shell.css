@@ -113,8 +113,10 @@
 /* every icon is drawn the same way — currentColor stroke/fill, same
    viewBox, same footprint — so mute/home/help read as one matching set */
 .icon-btn svg {
-  width: 52%;
-  height: 52%;
+  /* fixed size, not a %, so it can't resolve against its span's own
+     shrink-to-fit (auto) width and end up mis-sized/off-center */
+  width: clamp(16px, 3.1vw, 22px);
+  height: clamp(16px, 3.1vw, 22px);
   display: block;
   stroke: currentColor;
   fill: none;
@@ -122,6 +124,7 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.icon-btn span { display: grid; place-items: center; }
 .icon-btn[data-muted="true"] .icon-unmuted,
 .icon-btn[data-muted="false"] .icon-muted { display: none; }
 
