@@ -256,6 +256,7 @@
     muted: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M16 9l6 6"/><path d="M22 9l-6 6"/></svg>`,
     home: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>`,
     help: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.6a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1.9-1.1 1.8"/><line x1="12" y1="17" x2="12" y2="17.1"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/></svg>`,
   };
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -318,25 +319,6 @@
     // ---- DOM scaffolding -----------------------------------------
     _buildDom() {
       const root = document.getElementById('app') || document.body;
-      const cabinet = el('div', 'cabinet');
-
-      // Header bar — title (Atari1972) + mute/home/help + the Atari badge.
-      // A separate strip above the CRT glass, hidden only during boot.
-      const header = el('div', 'header-bar');
-      header.hidden = true;
-      header.innerHTML = `
-        <div class="header-title" id="header-title"></div>
-        <div class="header-controls" id="header-controls">
-          <button class="icon-btn" id="btn-mute" aria-label="Mute">
-            <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
-          </button>
-          <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
-          <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
-        </div>
-        <div class="header-logo" aria-hidden="true">${ATARI_LOGO_SVG}</div>
-      `;
-      cabinet.appendChild(header);
-
       const screen = el('div', 'crt-screen');
       screen.appendChild(el('div', 'grid-bg'));
       const canvas = el('canvas', null);
@@ -344,6 +326,20 @@
       screen.appendChild(canvas);
       screen.appendChild(el('div', 'vignette'));
       screen.appendChild(el('div', 'scanlines'));
+
+      // Persistent top-left HUD: mute always; home + pause while playing;
+      // help on the home/game-over screens only. No title/logo here —
+      // those only show up inside the pause menu.
+      const topleft = el('div', 'hud-topleft');
+      topleft.innerHTML = `
+        <button class="icon-btn" id="btn-mute" aria-label="Mute">
+          <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
+        </button>
+        <button class="icon-btn" id="btn-home" aria-label="Home" hidden>${ICONS.home}</button>
+        <button class="icon-btn" id="btn-pause" aria-label="Pause" hidden>${ICONS.pause}</button>
+        <button class="icon-btn" id="btn-help" aria-label="How to play">${ICONS.help}</button>
+      `;
+      screen.appendChild(topleft);
 
       // Center HUD (lives + score [+ optional dust/buff readout]) — gameplay only
       const center = el('div', 'hud-center');
@@ -365,23 +361,20 @@
       screen.appendChild(zoneLeft);
       screen.appendChild(zoneRight);
 
-      // Screens: boot, home, gameover, leaderboard, help
+      // Screens: boot, home, gameover, leaderboard, help, pause
       screen.appendChild(this._buildBootScreen());
       screen.appendChild(this._buildHomeScreen());
       screen.appendChild(this._buildGameOverScreen());
       screen.appendChild(this._buildLeaderboardScreen());
       screen.appendChild(this._buildHelpScreen());
-
-      cabinet.appendChild(screen);
+      screen.appendChild(this._buildPauseScreen());
 
       const rotatePrompt = el('div', 'rotate-prompt', 'ROTATE YOUR DEVICE<br>TO LANDSCAPE TO PLAY');
       rotatePrompt.classList.add('is-armed');
       document.body.appendChild(rotatePrompt);
 
-      root.appendChild(cabinet);
+      root.appendChild(screen);
       this.dom = {
-        cabinet, header,
-        headerTitle: header.querySelector('#header-title'),
         screen, canvas,
         gridBg: screen.querySelector('.grid-bg'),
         hudCenter: center,
@@ -389,11 +382,11 @@
         hudScore: center.querySelector('#hud-score'),
         hudDust: center.querySelector('#hud-dust'),
         zoneLeft, zoneRight,
-        btnMute: header.querySelector('#btn-mute'),
-        btnHome: header.querySelector('#btn-home'),
-        btnHelp: header.querySelector('#btn-help'),
+        btnMute: topleft.querySelector('#btn-mute'),
+        btnHome: topleft.querySelector('#btn-home'),
+        btnPause: topleft.querySelector('#btn-pause'),
+        btnHelp: topleft.querySelector('#btn-help'),
       };
-      this.dom.headerTitle.textContent = this.config.title || this.gameId.toUpperCase();
       this.ctx2d = canvas.getContext('2d');
       this._resizeCanvas();
       global.addEventListener('resize', () => this._resizeCanvas());
@@ -465,15 +458,46 @@
       return s;
     }
 
+    // The title/logo treatment that used to sit in a persistent header now
+    // only shows up here — opened by the pause button, closed by RESUME
+    // (or the same pause button again). Carries its own mute/home too, so
+    // the whole pause menu is self-contained.
+    _buildPauseScreen() {
+      const s = el('div', 'screen', `
+        <div class="pause-marquee">
+          <div class="pause-title">${this.config.title || this.gameId.toUpperCase()}</div>
+          <div class="pause-logo" aria-hidden="true">${ATARI_LOGO_SVG}</div>
+        </div>
+        <button class="btn-pixel primary" id="pause-resume">RESUME</button>
+        <div class="pause-controls">
+          <button class="icon-btn" id="pause-mute" aria-label="Mute">
+            <span class="icon-unmuted">${ICONS.unmuted}</span><span class="icon-muted">${ICONS.muted}</span>
+          </button>
+          <button class="icon-btn" id="pause-home" aria-label="Home">${ICONS.home}</button>
+        </div>
+      `);
+      s.id = 'screen-pause';
+      s.hidden = true;
+      return s;
+    }
+
     // ---- HUD wiring -------------------------------------------------
     _wireHud() {
-      const { btnMute, btnHome, btnHelp } = this.dom;
-      btnMute.dataset.muted = this.audio.muted ? 'true' : 'false';
-      btnMute.addEventListener('click', () => {
-        const muted = this.audio.toggle();
+      const { btnMute, btnHome, btnPause, btnHelp } = this.dom;
+      const pauseMute = document.getElementById('pause-mute');
+      const syncMute = (muted) => {
         btnMute.dataset.muted = muted ? 'true' : 'false';
-      });
+        pauseMute.dataset.muted = muted ? 'true' : 'false';
+      };
+      syncMute(this.audio.muted);
+      btnMute.addEventListener('click', () => syncMute(this.audio.toggle()));
+      pauseMute.addEventListener('click', () => syncMute(this.audio.toggle()));
+
       btnHome.addEventListener('click', () => this.goHome());
+      document.getElementById('pause-home').addEventListener('click', () => this.goHome());
+      btnPause.addEventListener('click', () => this.pause());
+      document.getElementById('pause-resume').addEventListener('click', () => this.resume());
+
       btnHelp.addEventListener('click', () => this._openHelp());
       document.getElementById('help-close').addEventListener('click', () => this._closeHelp());
 
@@ -700,7 +724,7 @@
 
     // ---- State machine ---------------------------------------------
     _hideAllScreens() {
-      ['screen-boot', 'screen-home', 'screen-gameover', 'screen-leaderboard'].forEach((id) => {
+      ['screen-boot', 'screen-home', 'screen-gameover', 'screen-leaderboard', 'screen-pause'].forEach((id) => {
         document.getElementById(id).hidden = true;
       });
     }
@@ -710,8 +734,8 @@
       this._hideAllScreens();
       const s = document.getElementById('screen-boot');
       s.hidden = false;
-      this.dom.header.hidden = true;
       this.dom.btnHome.hidden = true;
+      this.dom.btnPause.hidden = true;
       this.dom.btnHelp.hidden = true;
       setTimeout(() => {
         s.classList.add('is-fading');
@@ -724,11 +748,11 @@
       this.state = 'home';
       this._hideAllScreens();
       document.getElementById('screen-home').hidden = false;
-      this.dom.header.hidden = false;
       this.dom.hudCenter.hidden = true;
       this.dom.zoneLeft.style.visibility = 'hidden';
       this.dom.zoneRight.style.visibility = 'hidden';
       this.dom.btnHome.hidden = true;
+      this.dom.btnPause.hidden = true;
       this.dom.btnHelp.hidden = false;
       this.particles.clear();
       this.setDust(null);
@@ -742,6 +766,7 @@
       this.dom.zoneLeft.style.visibility = 'visible';
       this.dom.zoneRight.style.visibility = 'visible';
       this.dom.btnHome.hidden = false;
+      this.dom.btnPause.hidden = false;
       this.dom.btnHelp.hidden = true;
       this.setScore(0);
       this.setLevel(1);
@@ -752,9 +777,14 @@
     pause() {
       if (this.state !== 'playing') return;
       this.state = 'paused';
+      this.audio.play('select');
+      document.getElementById('screen-pause').hidden = false;
+      this.dom.btnPause.hidden = true;
     }
     resume() {
       if (this.state !== 'paused') return;
+      document.getElementById('screen-pause').hidden = true;
+      this.dom.btnPause.hidden = false;
       this.state = 'playing';
     }
 
@@ -770,6 +800,7 @@
       this._hideAllScreens();
       s.hidden = false;
       this.dom.btnHome.hidden = true;
+      this.dom.btnPause.hidden = true;
       this.dom.btnHelp.hidden = false;
       const advance = () => { s.removeEventListener('click', advance); this._showLeaderboardFlow(); };
       s.addEventListener('click', advance);

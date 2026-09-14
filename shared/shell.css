@@ -17,72 +17,56 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Cabinet — header bar + CRT screen stacked, locked to landscape,   */
-/* identical footprint on mobile & desktop. The header is a separate */
-/* strip (not part of the CRT glass); the CRT screen keeps the same  */
-/* box it always had, just sharing the footprint with the header.    */
+/* CRT viewport — locked to landscape, identical on mobile & desktop */
+/* No persistent header: the title/logo only appear inside the pause */
+/* menu (see .pause-marquee below), never over the title or gameplay */
+/* screen itself.                                                    */
 /* ---------------------------------------------------------------- */
-.cabinet {
+.crt-screen {
   position: relative;
   width: min(100vw, 177.78vh);
   height: min(100vh, 56.25vw);
   max-width: 1280px;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(6px, 1.2vh, 10px);
-}
-
-.header-bar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: clamp(7px, 1.4vh, 12px) clamp(12px, 2.4vw, 20px);
-  background: linear-gradient(180deg, var(--grey-90) 0%, var(--bg) 100%);
-  border: var(--line-width) solid var(--accent);
-  border-radius: var(--radius);
-  box-shadow: 0 0 5px var(--accent), 0 0 18px rgba(var(--accent-rgb),.4), inset 0 0 14px rgba(var(--accent-rgb),.12);
-  transition: border-color .6s ease, box-shadow .6s ease;
-}
-.header-bar[hidden] { display: none; }
-
-.header-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-atari);
-  font-weight: 700;
-  color: var(--accent);
-  text-shadow: 0 0 4px var(--accent), 0 0 14px rgba(var(--accent-rgb),.6), 0 0 32px rgba(var(--accent-rgb),.32);
-  font-size: clamp(15px, 3.2vw, 25px);
-  letter-spacing: .03em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color .6s ease, text-shadow .6s ease;
-}
-
-.header-controls { flex: none; display: flex; gap: 8px; }
-
-.header-logo {
-  flex: none;
-  width: clamp(42px, 7.5vw, 68px);
-  color: var(--white);
-  filter: drop-shadow(0 0 4px rgba(255,255,255,.55)) drop-shadow(0 0 12px rgba(255,255,255,.28));
-}
-.header-logo svg { display: block; width: 100%; height: auto; }
-.header-logo .cls-1 { fill: currentColor; }
-
-.crt-screen {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
   background: var(--bg);
   overflow: hidden;
   border-radius: var(--radius);
   box-shadow: 0 0 0 1px var(--grey-90), 0 20px 60px rgba(0,0,0,.6);
 }
+
+/* Pause menu content — the title/logo treatment that used to live in a
+   persistent header now only shows up here, inside the pause overlay. */
+.pause-marquee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: clamp(10px, 2vh, 16px) clamp(14px, 3vw, 24px);
+  background: linear-gradient(180deg, var(--grey-90) 0%, var(--bg) 100%);
+  border: var(--line-width) solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 0 5px var(--accent), 0 0 18px rgba(var(--accent-rgb),.4), inset 0 0 14px rgba(var(--accent-rgb),.12);
+}
+
+.pause-title {
+  font-family: var(--font-atari);
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 4px var(--accent), 0 0 14px rgba(var(--accent-rgb),.6), 0 0 32px rgba(var(--accent-rgb),.32);
+  font-size: clamp(18px, 4vw, 30px);
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+
+.pause-logo {
+  flex: none;
+  width: clamp(42px, 7.5vw, 62px);
+  color: var(--white);
+  filter: drop-shadow(0 0 4px rgba(255,255,255,.55)) drop-shadow(0 0 12px rgba(255,255,255,.28));
+}
+.pause-logo svg { display: block; width: 100%; height: auto; }
+.pause-logo .cls-1 { fill: currentColor; }
+
+.pause-controls { display: flex; gap: 10px; }
 
 /* Vectrex-style vignetted parallax grid, sits behind everything */
 .grid-bg {
@@ -137,10 +121,18 @@
 }
 
 /* ---------------------------------------------------------------- */
-/* Header controls: mute always first, home/help second — lives in   */
-/* .header-controls now (a normal flex child of .header-bar), not    */
-/* floated over the screen.                                          */
+/* Persistent top-left HUD: mute always first, then home/pause during */
+/* gameplay or help on the home/game-over screens.                    */
 /* ---------------------------------------------------------------- */
+.hud-topleft {
+  position: absolute;
+  top: var(--hud-inset);
+  left: var(--hud-inset);
+  z-index: 40; /* above .screen (30) — mute/home/pause/help stay live everywhere */
+  display: flex;
+  gap: 10px;
+}
+
 .icon-btn {
   width: var(--icon-btn);
   height: var(--icon-btn);
