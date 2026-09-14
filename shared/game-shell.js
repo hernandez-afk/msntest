@@ -379,9 +379,14 @@
       this._lastAccentKey = '';
       this._accentOverride = null;
 
-      // --accent itself is progressive (see _updateAccentColor) — every
-      // cabinet starts white and grows color as score/level climb.
-      // accent-2/accent-3 stay ordinary static per-game overrides.
+      // --accent itself is progressive by default (see _updateAccentColor)
+      // — every cabinet starts white and grows color as score/level climb
+      // — but a game can pin it to a fixed color instead via config.accent,
+      // same as accent-2/accent-3's ordinary static per-game overrides.
+      if (config.accent) {
+        const triplet = hexToRgbTriplet(cssVar(config.accent));
+        if (triplet) this.setAccentOverride(triplet);
+      }
       if (config.accent2) document.documentElement.style.setProperty('--accent-2', cssVar(config.accent2));
       if (config.accent3) document.documentElement.style.setProperty('--accent-3', cssVar(config.accent3));
       // plain/legible text defaults to Poppins (theme.css); a game may swap
@@ -1170,6 +1175,15 @@
       return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || name;
     }
     return name;
+  }
+
+  // For config.accent, which — like accent-2/accent-3 — takes a CSS var
+  // name or a literal hex color, but --accent-rgb (unlike accent-2/3) is
+  // always a bare "r, g, b" triplet (see setAccentOverride), not a color
+  // value CSS can use directly.
+  function hexToRgbTriplet(hex) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return m ? `${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}` : null;
   }
 
   global.AtariShell = {
