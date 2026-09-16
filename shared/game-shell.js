@@ -332,6 +332,7 @@
     home: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>`,
     help: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.6a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1.9-1.1 1.8"/><line x1="12" y1="17" x2="12" y2="17.1"/></svg>`,
     pause: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/></svg>`,
+    close: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`,
   };
 
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -378,6 +379,11 @@
       this._gridPhase = 0;
       this._lastAccentKey = '';
       this._accentOverride = null;
+      // A hub/gallery page (this project's own, or a tool like the Artifact
+      // preview) links here with ?preview=1 so this page can offer a way
+      // back — plain history.back() works since that link is same-window,
+      // not a new tab.
+      this._isPreview = new URLSearchParams(location.search).has('preview');
 
       // --accent itself is progressive by default (see _updateAccentColor)
       // — every cabinet starts white and grows color as score/level climb
@@ -508,10 +514,15 @@
       `;
       screen.appendChild(topleft);
 
-      // Pause lives on the opposite corner from mute/home/help.
+      // Pause lives on the opposite corner from mute/home/help. A close
+      // button joins it when this page was opened as a preview from a
+      // hub/gallery (see the ?preview=1 check in the constructor) — always
+      // visible, unlike pause, since there's no "gameplay only" restriction
+      // on wanting to leave a preview.
       const topright = el('div', 'hud-topright');
       topright.innerHTML = `
         <button class="icon-btn" id="btn-pause" aria-label="Pause" hidden>${ICONS.pause}</button>
+        ${this._isPreview ? `<button class="icon-btn" id="btn-close-preview" aria-label="Close preview">${ICONS.close}</button>` : ''}
       `;
       screen.appendChild(topright);
 
@@ -561,6 +572,7 @@
         btnHome: topleft.querySelector('#btn-home'),
         btnHelp: topleft.querySelector('#btn-help'),
         btnPause: topright.querySelector('#btn-pause'),
+        btnClosePreview: topright.querySelector('#btn-close-preview'),
       };
       this.ctx2d = canvas.getContext('2d');
       this._resizeCanvas();
@@ -669,6 +681,7 @@
       btnHome.addEventListener('click', () => this.goHome());
       document.getElementById('pause-home').addEventListener('click', () => this.goHome());
       btnPause.addEventListener('click', () => this.pause());
+      if (this.dom.btnClosePreview) this.dom.btnClosePreview.addEventListener('click', () => history.back());
       document.getElementById('pause-resume').addEventListener('click', () => this.resume());
 
       btnHelp.addEventListener('click', () => this._openHelp());
